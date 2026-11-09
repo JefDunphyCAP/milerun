@@ -161,21 +161,11 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 </div>
 
 <script>
-  // Secure SHA-256 Hash check for password 'RCCSmile'
-  const targetPasswordHash = "b45ef45c3ac3952f4c759082be7b40974e64fbbbc56ef48bc54407ee29035e16";
-
-  async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  async function checkPassword() {
+  function checkPassword() {
     const inputVal = document.getElementById('password-input').value;
-    const inputHash = await sha256(inputVal);
     
-    if (inputHash === targetPasswordHash) {
+    // Direct password check
+    if (inputVal === "RCCSmile") {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('app-content').style.display = 'block';
       initializeApp();
@@ -444,4 +434,13 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   function initMetricInput(metricKey) {
     const container = document.getElementById(`${metricKey}-container`);
     if (selectedCadets.length === 0) {
-      container.innerHTML = '<p
+      container.innerHTML = '<p class="m">No participants selected. Go to the "Roster" tab to choose cadets.</p>';
+      return;
+    }
+
+    let sortedCadets = [...selectedCadets].sort((a, b) => a.localeCompare(b));
+
+    container.innerHTML = sortedCadets.map(cadet => {
+      const val = (records[cadet] && records[cadet].current && records[cadet].current[metricKey]) ? records[cadet].current[metricKey] : '';
+      const safeVal = String(val).replace(/"/g, '&quot;');
+      const safeEscaped = cadet.replace(/'/g, "\\'")
