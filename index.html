@@ -241,13 +241,15 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     
     listEl.innerHTML = cadets.map((c) => {
       const isChecked = selectedCadets.includes(c) ? 'checked' : '';
+      const safeVal = c.replace(/"/g, '&quot;');
+      const safeEscaped = c.replace(/'/g, "\\'");
       return `
         <li>
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
-            <input type="checkbox" value="${c.replace(/"/g, '&quot;')}" ${isChecked} onchange="toggleSelect(this)" style="width:18px; height:18px;">
+            <input type="checkbox" value="${safeVal}" ${isChecked} onchange="toggleSelect(this)" style="width:18px; height:18px;">
             <span style="font-size:0.95rem">${c}</span>
           </label>
-          <button onclick="removeCadet('${c.replace(/'/g, "\\'")}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
+          <button onclick="removeCadet('${safeEscaped}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
         </li>
       `;
     }).join('');
@@ -320,14 +322,15 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       const finishedTime = (records[cadet] && records[cadet].run) ? records[cadet].run : null;
       const displayTxt = finishedTime ? finishedTime : "00:00.0";
       const isDone = finishedTime ? "done-time" : "";
+      const safeEscaped = cadet.replace(/'/g, "\\'");
       
       return `
         <div class="runner-row">
           <div>
             <strong>${cadet}</strong><br>
-            <span class="time-display ${isDone}" id="time-${CSS.escape(cadet)}">${displayTxt}</span>
+            <span class="time-display ${isDone}" data-run-time="${cadet}">${displayTxt}</span>
           </div>
-          <button class="stop-btn" onclick="stopRunner('${cadet.replace(/'/g, "\\'")}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
+          <button class="stop-btn" onclick="stopRunner('${safeEscaped}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
         </div>
       `;
     }).join('');
@@ -354,7 +357,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
       selectedCadets.forEach(cadet => {
         if (!records[cadet] || !records[cadet].run) {
-          const timeEl = document.getElementById(`time-${CSS.escape(cadet)}`);
+          const timeEl = document.querySelector(`[data-run-time="${CSS.escape(cadet)}"]`);
           if (timeEl) timeEl.textContent = formatTime(elapsed);
         }
       });
@@ -402,21 +405,23 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
     container.innerHTML = sortedCadets.map(cadet => {
       const val = (records[cadet] && records[cadet][metricKey]) ? records[cadet][metricKey] : '';
+      const safeVal = String(val).replace(/"/g, '&quot;');
+      const safeCadetAttr = cadet.replace(/"/g, '&quot;');
+      const safeEscaped = cadet.replace(/'/g, "\\'");
       return `
         <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
           <strong style="display:block; margin-bottom:6px;">${cadet}</strong>
-          <input type="number" id="input-${metricKey}-${CSS.escape(cadet)}" value="${val}" placeholder="Enter score" oninput="autoSaveMetric('${cadet.replace(/'/g, "\\'")}', '${metricKey}')" style="margin-bottom:0;">
+          <input type="number" value="${safeVal}" placeholder="Enter score" oninput="autoSaveMetric('${safeEscaped}', '${metricKey}', this.value)" style="margin-bottom:0;">
         </div>
       `;
     }).join('');
   }
 
-  function autoSaveMetric(cadet, metricKey) {
-    const inputVal = document.getElementById(`input-${metricKey}-${CSS.escape(cadet)}`).value;
+  function autoSaveMetric(cadet, metricKey, value) {
     const currentDate = new Date().toLocaleDateString();
 
     if (!records[cadet]) records[cadet] = {};
-    records[cadet][metricKey] = inputVal;
+    records[cadet][metricKey] = value;
     records[cadet].date = currentDate;
 
     saveData();
@@ -487,4 +492,38 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     
     let exportList = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
 
-    let csvContent = "data:text/csv;charset=utf-8,Cadet,Run Time,Curl Ups,Pushups,Sit and Reach,
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Run Time,Curl Ups,Pushups,Sit and Reach,Date\r\n";
+    exportList.forEach(cadet => {
+      let d = records[cadet];
+      let safeCadet = `"${cadet.replace(/"/g, '""')}"`;
+      csvContent += `${safeCadet},${d.run || ''},${d.curlups || ''},${d.pushups || ''},${d.sitreach || ''},${d.date || ''}\r\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "rccs_fitness_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function clearHistory() {
+    if (confirm("Are you sure you want to clear all history?")) {
+      records = {};
+      saveData();
+      renderHistory();
+      initActiveRunners();
+    }
+  }
+
+  function initializeApp() {
+    renderRoster();
+    renderHistory();
+    initActiveRunners();
+  }
+
+  document.getElementById('password-input').focus();
+</script>
+</body>
+</html>
