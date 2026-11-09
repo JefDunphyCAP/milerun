@@ -112,7 +112,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <!-- Curl Ups View -->
   <div id="view-curlups" class="view-section card">
     <h2>Curl Ups Tracking</h2>
-    <p class="msg">Enter scores for participants selected in the Roster.</p>
+    <p class="msg">Type scores for participants. Changes save automatically.</p>
+    <div style="margin-bottom: 12px;">
+      <button onclick="resetMetric('curlups')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Curl Ups Scores</button>
+    </div>
     <div id="curlups-container">
       <p class="m">No participants selected.</p>
     </div>
@@ -121,7 +124,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <!-- Pushups View -->
   <div id="view-pushups" class="view-section card">
     <h2>Pushups Tracking</h2>
-    <p class="msg">Enter scores for participants selected in the Roster.</p>
+    <p class="msg">Type scores for participants. Changes save automatically.</p>
+    <div style="margin-bottom: 12px;">
+      <button onclick="resetMetric('pushups')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Pushups Scores</button>
+    </div>
     <div id="pushups-container">
       <p class="m">No participants selected.</p>
     </div>
@@ -130,7 +136,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <!-- Sit and Reach View -->
   <div id="view-sitreach" class="view-section card">
     <h2>Sit and Reach Tracking</h2>
-    <p class="msg">Enter scores for participants selected in the Roster.</p>
+    <p class="msg">Type scores for participants. Changes save automatically.</p>
+    <div style="margin-bottom: 12px;">
+      <button onclick="resetMetric('sitreach')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Sit & Reach Scores</button>
+    </div>
     <div id="sitreach-container">
       <p class="m">No participants selected.</p>
     </div>
@@ -396,16 +405,13 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       return `
         <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
           <strong style="display:block; margin-bottom:6px;">${cadet}</strong>
-          <div style="display:flex; gap:8px;">
-            <input type="number" id="input-${metricKey}-${CSS.escape(cadet)}" value="${val}" placeholder="Enter score" style="margin-bottom:0;">
-            <button onclick="saveMetric('${cadet.replace(/'/g, "\\'")}', '${metricKey}')" class="p" style="padding:8px 14px;">Save</button>
-          </div>
+          <input type="number" id="input-${metricKey}-${CSS.escape(cadet)}" value="${val}" placeholder="Enter score" oninput="autoSaveMetric('${cadet.replace(/'/g, "\\'")}', '${metricKey}')" style="margin-bottom:0;">
         </div>
       `;
     }).join('');
   }
 
-  function saveMetric(cadet, metricKey) {
+  function autoSaveMetric(cadet, metricKey) {
     const inputVal = document.getElementById(`input-${metricKey}-${CSS.escape(cadet)}`).value;
     const currentDate = new Date().toLocaleDateString();
 
@@ -415,7 +421,20 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
     saveData();
     renderHistory();
-    alert(`Saved score for ${cadet}`);
+  }
+
+  function resetMetric(metricKey) {
+    const eventNames = { curlups: 'Curl Ups', pushups: 'Pushups', sitreach: 'Sit & Reach' };
+    if (confirm(`Are you sure you want to reset all ${eventNames[metricKey]} scores?`)) {
+      for (let cadet in records) {
+        if (records[cadet]) {
+          delete records[cadet][metricKey];
+        }
+      }
+      saveData();
+      renderHistory();
+      initMetricInput(metricKey);
+    }
   }
 
   function renderHistory() {
@@ -468,38 +487,4 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     
     let exportList = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
 
-    let csvContent = "data:text/csv;charset=utf-8,Cadet,Run Time,Curl Ups,Pushups,Sit and Reach,Date\r\n";
-    exportList.forEach(cadet => {
-      let d = records[cadet];
-      let safeCadet = `"${cadet.replace(/"/g, '""')}"`;
-      csvContent += `${safeCadet},${d.run || ''},${d.curlups || ''},${d.pushups || ''},${d.sitreach || ''},${d.date || ''}\r\n`;
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "rccs_fitness_history.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function clearHistory() {
-    if (confirm("Are you sure you want to clear all history?")) {
-      records = {};
-      saveData();
-      renderHistory();
-      initActiveRunners();
-    }
-  }
-
-  function initializeApp() {
-    renderRoster();
-    renderHistory();
-    initActiveRunners();
-  }
-
-  document.getElementById('password-input').focus();
-</script>
-</body>
-</html>
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Run Time,Curl Ups,Pushups,Sit and Reach,
