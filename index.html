@@ -1,17 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Put all your original head contents, styles, and links here -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mile Run Tracker</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
         /* Login Overlay Styles */
         #login-overlay {
             position: fixed;
@@ -19,11 +13,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.85);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 9999;
+            z-index: 99999;
         }
         .login-box {
             background: white;
@@ -32,6 +26,7 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             text-align: center;
             width: 300px;
+            font-family: Arial, sans-serif;
         }
         .login-box h2 {
             margin-top: 0;
@@ -63,53 +58,10 @@
             margin-top: 10px;
             display: none;
         }
-        /* Main App Container */
+        
+        /* Keep your original styles here as well, and wrap everything else */
         #app-container {
-            display: none;
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        /* Tracker specific styles can go here */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        button.action-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button.action-btn:hover {
-            background-color: #218838;
+            display: none; /* Hidden until correct password is entered */
         }
     </style>
 </head>
@@ -119,7 +71,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Site Access</h2>
-            <p>Please enter the password to continue.</p>
+            <p>Please enter the password to view the tracker.</p>
             <input type="password" id="password-input" placeholder="Password">
             <br>
             <button onclick="checkPassword()">Enter</button>
@@ -127,34 +79,11 @@
         </div>
     </div>
 
-    <!-- Main Application Content -->
+    <!-- MAIN APP CONTAINER: Place your exact original HTML/body contents right here -->
     <div id="app-container">
-        <h1>Mile Run Tracker</h1>
-        <p>Track cadet mile run times and progress below.</p>
         
-        <div class="form-group">
-            <label for="cadet-name">Cadet Name:</label>
-            <input type="text" id="cadet-name" placeholder="Enter cadet's name">
-        </div>
-        <div class="form-group">
-            <label for="run-time">Run Time (e.g., 8:30):</label>
-            <input type="text" id="run-time" placeholder="MM:SS">
-        </div>
-        <button class="action-btn" onclick="addRunRecord()">Add Record</button>
+        <!-- PASTE ALL YOUR ORIGINAL TRACKER HTML CODE HERE -->
 
-        <h3>Recorded Times</h3>
-        <table id="runs-table">
-            <thead>
-                <tr>
-                    <th>Cadet Name</th>
-                    <th>Time</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody id="runs-tbody">
-                <!-- Records will populate here -->
-            </tbody>
-        </table>
     </div>
 
     <script>
@@ -178,28 +107,6 @@
                 checkPassword();
             }
         });
-
-        function addRunRecord() {
-            const name = document.getElementById('cadet-name').value;
-            const time = document.getElementById('run-time').value;
-            
-            if(!name || !time) {
-                alert('Please fill out both fields.');
-                return;
-            }
-
-            const tbody = document.getElementById('runs-tbody');
-            const row = document.createElement('tr');
-            
-            const dateStr = new Date().toLocaleDateString();
-            
-            row.innerHTML = `<td>${name}</td><td>${time}</td><td>${dateStr}</td>`;
-            tbody.appendChild(row);
-
-            // Clear inputs
-            document.getElementById('cadet-name').value = '';
-            document.getElementById('run-time').value = '';
-        }
     </script>
 
 </body>
