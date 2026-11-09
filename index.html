@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RCCS Cadet Mile Run Tracker</title>
+<title>RCCS Cadet Fitness Tracker</title>
 <link rel="icon" href="data:,">
 <style>
 :root{--bg:#f3f5f8;--card:#fff;--ink:#14213d;--mute:#5b6577;--acc:#1d4ed8;--ok:#15803d;--line:#d5dae3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -11,14 +11,14 @@
 *{box-sizing:border-box}html{color-scheme:light dark}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:12px;max-width:640px;margin-inline:auto}
 h1{font-size:1.3rem;margin:4px 0 10px}h2{font-size:1.05rem;margin:0 0 8px}
-nav{display:flex;gap:6px;margin-bottom:12px}
-nav button{flex:1}
+nav{display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;}
+nav button{flex:0 0 auto;font-size:0.85rem;padding:8px 10px;}
 button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 button.on,button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
 .clock{font-size:2.8rem;font-weight:700;font-variant-numeric:tabular-nums;text-align:center;margin:8px 0;letter-spacing:1px;}
-input[type="text"], input[type="password"]{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
+input[type="text"], input[type="password"], input[type="number"]{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
 .g{display:flex;gap:8px;flex-wrap:wrap}.g>*{flex:1}
 .msg{min-height:1.4em;color:var(--mute);margin-bottom:8px}
 .view-section { display: none; }
@@ -30,6 +30,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 .stop-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 .time-display { font-variant-numeric: tabular-nums; font-weight: bold; font-size: 1.1rem; }
 .done-time { color: var(--ok); }
+.history-card { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+.metric-boxes { display: flex; gap: 6px; margin-top: 6px; }
+.metric-box { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 6px; text-align: center; font-size: 0.8rem; }
+.metric-box span { display: block; font-weight: bold; font-size: 0.95rem; color: var(--ok); margin-top: 2px; }
 #auth-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -57,17 +61,37 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
 <!-- Main App Content (Hidden until authenticated) -->
 <div id="app-content" style="display: none;">
-  <h1>RCCS Cadet Mile Run Tracker</h1>
+  <h1>RCCS Cadet Fitness Tracker</h1>
 
   <nav>
-    <button data-v="run" class="on">Active Heat</button>
-    <button data-v="roster">Roster</button>
+    <button data-v="roster" class="on">Roster</button>
+    <button data-v="run">Mile Run</button>
+    <button data-v="curlups">Curl Ups</button>
+    <button data-v="pushups">Pushups</button>
+    <button data-v="sitreach">Sit & Reach</button>
     <button data-v="hist">History</button>
   </nav>
 
-  <!-- Run Heat View -->
-  <div id="view-run" class="view-section active card">
-    <h2>Timer</h2>
+  <!-- Roster View -->
+  <div id="view-roster" class="view-section active card">
+    <h2>Select Participants for Heat</h2>
+    <div style="margin-bottom: 12px; display:flex; gap:6px;">
+      <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
+      <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
+    </div>
+
+    <div class="g" style="margin-bottom: 12px;">
+      <input type="text" id="cadet-name-input" placeholder="Add custom cadet name & ID">
+      <button onclick="addCadet()" class="p">Add</button>
+    </div>
+
+    <h3>Roster (<span id="cadet-count">0</span>)</h3>
+    <ul id="cadet-select-list"></ul>
+  </div>
+
+  <!-- Mile Run View -->
+  <div id="view-run" class="view-section card">
+    <h2>Mile Run Timer</h2>
     
     <div id="master-clock" class="clock">00:00.0</div>
 
@@ -85,38 +109,47 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     <p id="run-msg" class="msg" style="margin-top:12px;"></p>
   </div>
 
-  <!-- Roster View -->
-  <div id="view-roster" class="view-section card">
-    <h2>Select Participants for Heat</h2>
-    <div style="margin-bottom: 12px; display:flex; gap:6px;">
-      <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
-      <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
+  <!-- Curl Ups View -->
+  <div id="view-curlups" class="view-section card">
+    <h2>Curl Ups Tracking</h2>
+    <p class="msg">Enter scores for participants selected in the Roster.</p>
+    <div id="curlups-container">
+      <p class="m">No participants selected.</p>
     </div>
+  </div>
 
-    <div class="g" style="margin-bottom: 12px;">
-      <input type="text" id="cadet-name-input" placeholder="Add custom cadet name & ID">
-      <button onclick="addCadet()" class="p">Add</button>
+  <!-- Pushups View -->
+  <div id="view-pushups" class="view-section card">
+    <h2>Pushups Tracking</h2>
+    <p class="msg">Enter scores for participants selected in the Roster.</p>
+    <div id="pushups-container">
+      <p class="m">No participants selected.</p>
     </div>
+  </div>
 
-    <h3>Roster (<span id="cadet-count">0</span>)</h3>
-    <ul id="cadet-select-list"></ul>
+  <!-- Sit and Reach View -->
+  <div id="view-sitreach" class="view-section card">
+    <h2>Sit and Reach Tracking</h2>
+    <p class="msg">Enter scores for participants selected in the Roster.</p>
+    <div id="sitreach-container">
+      <p class="m">No participants selected.</p>
+    </div>
   </div>
 
   <!-- History View -->
   <div id="view-hist" class="view-section card">
-    <h2>Run History</h2>
+    <h2>Fitness History</h2>
     <div style="display:flex; gap:8px; margin-bottom:12px;">
       <button onclick="exportToCSV()" class="p" style="font-size:0.85rem; flex:1;">Download CSV for Sheets</button>
       <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear History</button>
     </div>
-    <ul id="history-list">
-      <li class="m" style="color:var(--mute);">No runs recorded yet.</li>
-    </ul>
+    <div id="history-list">
+      <p class="m" style="color:var(--mute);">No records recorded yet.</p>
+    </div>
   </div>
 </div>
 
 <script>
-  // Password Protection Logic
   function checkPassword() {
     const inputVal = document.getElementById('password-input').value;
     if (inputVal === 'RCCSmile') {
@@ -130,14 +163,12 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
   }
 
-  // Allow pressing Enter in password field
   document.getElementById('password-input').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
       checkPassword();
     }
   });
 
-  // Tab Switching
   const buttons = document.querySelectorAll('nav button');
   const sections = document.querySelectorAll('.view-section');
 
@@ -151,6 +182,12 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       });
       if(targetView === 'run') {
         initActiveRunners();
+      } else if(targetView === 'curlups') {
+        initMetricInput('curlups');
+      } else if(targetView === 'pushups') {
+        initMetricInput('pushups');
+      } else if(targetView === 'sitreach') {
+        initMetricInput('sitreach');
       }
     });
   });
@@ -179,14 +216,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || defaultCadets;
   let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
-  let history = JSON.parse(localStorage.getItem('rccs_history')) || [];
+  let records = JSON.parse(localStorage.getItem('rccs_records')) || {}; 
 
   cadets.sort((a, b) => a.localeCompare(b));
 
   function saveData() {
     localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
     localStorage.setItem('rccs_selected', JSON.stringify(selectedCadets));
-    localStorage.setItem('rccs_history', JSON.stringify(history));
+    localStorage.setItem('rccs_records', JSON.stringify(records));
   }
 
   function renderRoster() {
@@ -255,7 +292,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   let heatStartTime = null;
   let heatInterval = null;
-  let runnerTimes = {}; 
 
   function initActiveRunners() {
     const container = document.getElementById('active-runners-container');
@@ -265,14 +301,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
 
     let sortedRunners = [...selectedCadets].sort((a, b) => {
-      let aDone = runnerTimes[a] ? 1 : 0;
-      let bDone = runnerTimes[b] ? 1 : 0;
+      let aDone = (records[a] && records[a].run) ? 1 : 0;
+      let bDone = (records[b] && records[b].run) ? 1 : 0;
       if (aDone !== bDone) return aDone - bDone;
       return a.localeCompare(b);
     });
 
     container.innerHTML = sortedRunners.map(cadet => {
-      const finishedTime = runnerTimes[cadet];
+      const finishedTime = (records[cadet] && records[cadet].run) ? records[cadet].run : null;
       const displayTxt = finishedTime ? finishedTime : "00:00.0";
       const isDone = finishedTime ? "done-time" : "";
       
@@ -296,7 +332,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     if (heatStartTime) return; 
 
     heatStartTime = Date.now();
-    runnerTimes = {};
     initActiveRunners();
 
     document.getElementById('start-heat-btn').style.background = '#9ca3af';
@@ -309,7 +344,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       }
 
       selectedCadets.forEach(cadet => {
-        if (!runnerTimes[cadet]) {
+        if (!records[cadet] || !records[cadet].run) {
           const timeEl = document.getElementById(`time-${CSS.escape(cadet)}`);
           if (timeEl) timeEl.textContent = formatTime(elapsed);
         }
@@ -321,15 +356,17 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     if (!heatStartTime) return;
     const elapsed = Date.now() - heatStartTime;
     const formatted = formatTime(elapsed);
+    const currentDate = new Date().toLocaleDateString();
 
-    runnerTimes[cadet] = formatted;
+    if (!records[cadet]) records[cadet] = {};
+    records[cadet].run = formatted;
+    records[cadet].date = currentDate;
 
-    history.push({ cadet, time: formatted, date: new Date().toLocaleDateString() });
     saveData();
     renderHistory();
     initActiveRunners(); 
 
-    const allFinished = selectedCadets.every(c => runnerTimes[c]);
+    const allFinished = selectedCadets.every(c => records[c] && records[c].run);
     if (allFinished) {
       clearInterval(heatInterval);
       heatStartTime = null; 
@@ -340,56 +377,119 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   function resetHeat() {
     clearInterval(heatInterval);
     heatStartTime = null;
-    runnerTimes = {};
     document.getElementById('master-clock').textContent = "00:00.0";
     document.getElementById('start-heat-btn').style.background = '';
     initActiveRunners();
   }
 
+  function initMetricInput(metricKey) {
+    const container = document.getElementById(`${metricKey}-container`);
+    if (selectedCadets.length === 0) {
+      container.innerHTML = '<p class="m">No participants selected. Go to the "Roster" tab to choose cadets.</p>';
+      return;
+    }
+
+    let sortedCadets = [...selectedCadets].sort((a, b) => a.localeCompare(b));
+
+    container.innerHTML = sortedCadets.map(cadet => {
+      const val = (records[cadet] && records[cadet][metricKey]) ? records[cadet][metricKey] : '';
+      return `
+        <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
+          <strong style="display:block; margin-bottom:6px;">${cadet}</strong>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="input-${metricKey}-${CSS.escape(cadet)}" value="${val}" placeholder="Enter score" style="margin-bottom:0;">
+            <button onclick="saveMetric('${cadet.replace(/'/g, "\\'")}', '${metricKey}')" class="p" style="padding:8px 14px;">Save</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function saveMetric(cadet, metricKey) {
+    const inputVal = document.getElementById(`input-${metricKey}-${CSS.escape(cadet)}`).value;
+    const currentDate = new Date().toLocaleDateString();
+
+    if (!records[cadet]) records[cadet] = {};
+    records[cadet][metricKey] = inputVal;
+    records[cadet].date = currentDate;
+
+    saveData();
+    renderHistory();
+    alert(`Saved score for ${cadet}`);
+  }
+
+  function renderHistory() {
+    const historyListEl = document.getElementById('history-list');
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].run || records[c].curlups || records[c].pushups || records[c].sitreach));
+
+    if (activeCadetsWithRecords.length === 0) {
+      historyListEl.innerHTML = '<p class="m" style="color:var(--mute);">No records recorded yet.</p>';
+    } else {
+      let sortedHistory = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
+
+      historyListEl.innerHTML = sortedHistory.map(cadet => {
+        const data = records[cadet];
+        return `
+          <div class="history-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong>${cadet}</strong>
+              <span style="color:var(--mute); font-size:0.8rem">${data.date || ''}</span>
+            </div>
+            <div class="metric-boxes">
+              <div class="metric-box">
+                Run Time
+                <span>${data.run || '—'}</span>
+              </div>
+              <div class="metric-box">
+                Curl Ups
+                <span>${data.curlups || '—'}</span>
+              </div>
+              <div class="metric-box">
+                Pushups
+                <span>${data.pushups || '—'}</span>
+              </div>
+              <div class="metric-box">
+                Sit & Reach
+                <span>${data.sitreach || '—'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
   function exportToCSV() {
-    if (history.length === 0) {
-      alert("No run history to export.");
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].run || records[c].curlups || records[c].pushups || records[c].sitreach));
+    if (activeCadetsWithRecords.length === 0) {
+      alert("No history to export.");
       return;
     }
     
-    let exportList = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
+    let exportList = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
 
-    let csvContent = "data:text/csv;charset=utf-8,Cadet,Time,Date\r\n";
-    exportList.forEach(h => {
-      let safeCadet = `"${h.cadet.replace(/"/g, '""')}"`;
-      csvContent += `${safeCadet},${h.time},${h.date}\r\n`;
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Run Time,Curl Ups,Pushups,Sit and Reach,Date\r\n";
+    exportList.forEach(cadet => {
+      let d = records[cadet];
+      let safeCadet = `"${cadet.replace(/"/g, '""')}"`;
+      csvContent += `${safeCadet},${d.run || ''},${d.curlups || ''},${d.pushups || ''},${d.sitreach || ''},${d.date || ''}\r\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "rccs_mile_run_history.csv");
+    link.setAttribute("download", "rccs_fitness_history.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
-  function renderHistory() {
-    const historyListEl = document.getElementById('history-list');
-    if (history.length === 0) {
-      historyListEl.innerHTML = '<li class="m" style="color:var(--mute);">No runs recorded yet.</li>';
-    } else {
-      let sortedHistory = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
-
-      historyListEl.innerHTML = sortedHistory.map(h => `
-        <li style="display:flex; justify-content:space-between; align-items:center;">
-          <span><strong>${h.cadet}</strong> - <span style="color:var(--ok); font-weight:bold;">${h.time}</span></span>
-          <span style="color:var(--mute); font-size:0.85rem">${h.date}</span>
-        </li>
-      `).join('');
-    }
-  }
-
   function clearHistory() {
     if (confirm("Are you sure you want to clear all history?")) {
-      history = [];
+      records = {};
       saveData();
       renderHistory();
+      initActiveRunners();
     }
   }
 
@@ -399,7 +499,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     initActiveRunners();
   }
 
-  // Focus password input on load
   document.getElementById('password-input').focus();
 </script>
 </body>
