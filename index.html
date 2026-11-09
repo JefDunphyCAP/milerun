@@ -163,7 +163,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 <script>
   function checkPassword() {
     const inputVal = document.getElementById('password-input').value;
-    if (inputVal === "RCCSmile") {
+    if (inputVal === 'RCCSmile') {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('app-content').style.display = 'block';
       initializeApp();
@@ -225,45 +225,21 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     "Xia, Anlang, (792179)"
   ];
 
-  let cadets = defaultCadets;
-  try {
-    const saved = localStorage.getItem('rccs_cadets');
-    if (saved) cadets = JSON.parse(saved);
-  } catch (e) {
-    cadets = defaultCadets;
-  }
-
-  let selectedCadets = [];
-  try {
-    const savedSel = localStorage.getItem('rccs_selected');
-    if (savedSel) selectedCadets = JSON.parse(savedSel);
-  } catch (e) {
-    selectedCadets = [];
-  }
-
-  let records = {};
-  try {
-    const savedRec = localStorage.getItem('rccs_records');
-    if (savedRec) records = JSON.parse(savedRec);
-  } catch (e) {
-    records = {};
-  }
+  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || defaultCadets;
+  let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
+  let records = JSON.parse(localStorage.getItem('rccs_records')) || {}; 
 
   cadets.sort((a, b) => a.localeCompare(b));
 
   function saveData() {
-    try {
-      localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
-      localStorage.setItem('rccs_selected', JSON.stringify(selectedCadets));
-      localStorage.setItem('rccs_records', JSON.stringify(records));
-    } catch (e) {}
+    localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
+    localStorage.setItem('rccs_selected', JSON.stringify(selectedCadets));
+    localStorage.setItem('rccs_records', JSON.stringify(records));
   }
 
   function renderRoster() {
-    const countEl = document.getElementById('cadet-count');
-    if(countEl) countEl.textContent = cadets.length;
+    document.getElementById('cadet-count').textContent = cadets.length;
     const listEl = document.getElementById('cadet-select-list');
-    if(!listEl) return;
     
     listEl.innerHTML = cadets.map((c) => {
       const isChecked = selectedCadets.includes(c) ? 'checked' : '';
@@ -301,7 +277,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   function addCadet() {
     const input = document.getElementById('cadet-name-input');
-    if(!input) return;
     const name = input.value.trim();
     if (!name) return;
     if (!cadets.includes(name)) {
@@ -343,9 +318,8 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   function initActiveRunners() {
     const container = document.getElementById('active-runners-container');
-    if(!container) return;
     if (selectedCadets.length === 0) {
-      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster" tab to choose cadets for this heat.</p>';
+      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster" tab to choose cadets.</p>';
       return;
     }
 
@@ -384,15 +358,13 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     heatStartTime = Date.now();
     initActiveRunners();
 
-    const startBtn = document.getElementById('start-heat-btn');
-    if(startBtn) startBtn.style.background = '#9ca3af';
+    document.getElementById('start-heat-btn').style.background = '#9ca3af';
 
     heatInterval = setInterval(() => {
       const elapsed = Date.now() - heatStartTime;
 
-      const clockEl = document.getElementById('master-clock');
-      if (heatStartTime && clockEl) {
-        clockEl.textContent = formatTime(elapsed);
+      if (heatStartTime) {
+        document.getElementById('master-clock').textContent = formatTime(elapsed);
       }
 
       selectedCadets.forEach(cadet => {
@@ -423,19 +395,17 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     if (allFinished) {
       clearInterval(heatInterval);
       heatStartTime = null; 
-      const startBtn = document.getElementById('start-heat-btn');
-      if(startBtn) startBtn.style.background = '';
+      document.getElementById('start-heat-btn').style.background = '';
     }
   }
 
   function resetHeat() {
     clearInterval(heatInterval);
     heatStartTime = null;
-    const clockEl = document.getElementById('master-clock');
-    if(clockEl) clockEl.textContent = "00:00.0";
-    const startBtn = document.getElementById('start-heat-btn');
-    if(startBtn) startBtn.style.background = '';
+    document.getElementById('master-clock').textContent = "00:00.0";
+    document.getElementById('start-heat-btn').style.background = '';
     
+    // Clear run scores from current test records so they can be re-timed
     selectedCadets.forEach(cadet => {
       if (records[cadet] && records[cadet].current) {
         delete records[cadet].current.run;
@@ -448,7 +418,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   function initMetricInput(metricKey) {
     const container = document.getElementById(`${metricKey}-container`);
-    if(!container) return;
     if (selectedCadets.length === 0) {
       container.innerHTML = '<p class="m">No participants selected. Go to the "Roster" tab to choose cadets.</p>';
       return;
@@ -470,4 +439,23 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   }
 
   function autoSaveMetric(cadet, metricKey, value) {
-    const currentDate = new Date()
+    const currentDate = new Date().toLocaleDateString();
+
+    if (!records[cadet]) records[cadet] = {};
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current[metricKey] = value;
+    records[cadet].current.date = currentDate;
+
+    saveData();
+    renderHistory();
+  }
+
+  function resetMetric(metricKey) {
+    const eventNames = { curlups: 'Curl Ups', pushups: 'Pushups', sitreach: 'Sit & Reach' };
+    if (confirm(`Are you sure you want to reset current ${eventNames[metricKey]} scores?`)) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          delete records[cadet].current[metricKey];
+        }
+      }
+     
