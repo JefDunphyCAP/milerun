@@ -153,7 +153,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       <button onclick="exportToCSV()" class="p" style="font-size:0.85rem;">Download CSV</button>
       <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear All</button>
     </div>
-    <p class="msg">Clicking "Archive/Roll Over Test Day" moves current active scores to "Previous Test" and clears active fields for a new test session.</p>
+    <p class="msg">Clicking archive rolls current scores to previous test, clears current fields, and deselects all roster participants.</p>
     <div id="history-list">
       <p class="m" style="color:var(--mute);">No records recorded yet.</p>
     </div>
@@ -455,19 +455,27 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
   }
 
-  // Rolls current records into previous records and clears current for a new test day
+  // Rolls current records into previous records, clears current fields, and deselects all roster participants
   function archiveCurrentTest() {
-    if (confirm("Archive current test results into 'Previous Test' and clear current fields for a new test?")) {
+    if (confirm("Archive current test results into 'Previous Test', reset active scores, and deselect all roster participants?")) {
       for (let cadet in records) {
         if (records[cadet] && records[cadet].current) {
           records[cadet].previous = { ...records[cadet].current };
           records[cadet].current = {};
         }
       }
+      // Deselect all cadets
+      selectedCadets = [];
+      
+      // Reset timer if running
+      resetHeat();
+
       saveData();
+      renderRoster();
       renderHistory();
       initActiveRunners();
-      alert("Test day rolled over successfully!");
+      
+      alert("Test day archived and roster deselected successfully!");
     }
   }
 
