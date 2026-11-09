@@ -149,10 +149,11 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     
     listEl.innerHTML = cadets.map((c, i) => {
       const isChecked = selectedCadets.includes(c) ? 'checked' : '';
+      // Store index safely to avoid string escaping issues
       return `
         <li>
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
-            <input type="checkbox" value="${c}" ${isChecked} onchange="toggleSelectCadet(this)" style="width:18px; height:18px;">
+            <input type="checkbox" ${isChecked} onchange="toggleSelectCadet(${i}, this.checked)" style="width:18px; height:18px;">
             <span style="font-size:0.95rem">${c}</span>
           </label>
           <button onclick="removeCadet(${i})" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
@@ -161,9 +162,9 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }).join('');
   }
 
-  function toggleSelectCadet(checkbox) {
-    const cadetName = checkbox.value;
-    if (checkbox.checked) {
+  function toggleSelectCadet(index, isChecked) {
+    const cadetName = cadets[index];
+    if (isChecked) {
       if (!selectedCadets.includes(cadetName)) {
         selectedCadets.push(cadetName);
       }
