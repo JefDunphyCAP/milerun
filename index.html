@@ -62,17 +62,15 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   </div>
 </div>
 
-<!-- Main App Content (Hidden until authenticated) -->
+<!-- Main App Content -->
 <div id="app-content" style="display: none;">
   <h1>RCCS PT Testing</h1>
 
-  <!-- Top Row: Roster & History Tabs (Widened) -->
   <nav id="nav-top">
     <button data-v="roster" class="on">Roster</button>
     <button data-v="hist">History</button>
   </nav>
 
-  <!-- Second Row: Event Tabs -->
   <nav id="nav-events">
     <button data-v="pacer">Pacer</button>
     <button data-v="run">Mile Run</button>
@@ -361,4 +359,257 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
       if (query) {
         let aMatch = a.toLowerCase().startsWith(query) ? 0 : 1;
-        let b
+        let bMatch = b.toLowerCase().startsWith(query) ? 0 : 1;
+        if (aMatch !== bMatch) return aMatch - bMatch;
+      }
+
+      return a.localeCompare(b);
+    });
+
+    container.innerHTML = sortedRunners.map(cadet => {
+      const finishedTime = (records[cadet] && records[cadet].current && records[cadet].current.run) ? records[cadet].current.run : null;
+      const displayTxt = finishedTime ? finishedTime : "00:00.0";
+      const isDone = finishedTime ? "done-time" : "";
+      const safeEscaped = cadet.replace(/'/g, "\\'");
+      
+      return `
+        <div class="runner-row">
+          <div>
+            <strong>${cadet}</strong><br>
+            <span class="time-display ${isDone}" data-run-time="${cadet}">${displayTxt}</span>
+          </div>
+          <button class="stop-btn" onclick="stopRunner('${safeEscaped}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function startHeat() {
+    if (selectedCadets.length === 0) {
+      alert("Please select at least one cadet in the Roster tab first.");
+      return;
+    }
+    if (heatStartTime) return; 
+
+    heatStartTime = Date.now();
+    initActiveRunners();
+
+    const startBtn = document.getElementById('start-heat-btn');
+    if (startBtn) startBtn.style.background = '#9ca3af';
+
+    heatInterval = setInterval(() => {
+      const elapsed = Date.now() - heatStartTime;
+
+      const masterClock = document.getElementById('master-clock');
+      if (masterClock && heatStartTime) {
+        masterClock.textContent = formatTime(elapsed);
+      }
+
+      selectedCadets.forEach(cadet => {
+        if (!records[cadet] || !records[cadet].current || !records[cadet].current.run) {
+          const timeEl = document.querySelector(`[data-run-time="${CSS.escape(cadet)}"]`);
+          if (timeEl) timeEl.textContent = formatTime(elapsed);
+        }
+      });
+    }, 100);
+  }
+
+  function stopRunner(cadet) {
+    if (!heatStartTime) return;
+    const elapsed = Date.now() - heatStartTime;
+    const formatted = formatTime(elapsed);
+    const currentDate = new Date().toLocaleDateString();
+
+    if (!records[cadet]) records[cadet] = {};
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current.run = formatted;
+    records[cadet].current.date = currentDate;
+
+    saveData();
+    renderHistory();
+    initActiveRunners(); 
+
+    const allFinished = selectedCadets.every(c => records[c] && records[c].current && records[c].current.run);
+    if (allFinished) {
+      clearInterval(heatInterval);
+      heatStartTime = null; 
+      const startBtn = document.getElementById('start-heat-btn');
+      if (startBtn) startBtn.style.background = '';
+    }
+  }
+
+  function resetHeat() {
+    clearInterval(heatInterval);
+    heatStartTime = null;
+    const masterClock = document.getElementById('master-clock');
+    if (masterClock) masterClock.textContent = "00:00.0";
+    const startBtn = document.getElementById('start-heat-btn');
+    if (startBtn) startBtn.style.background = '';
+    
+    selectedCadets.forEach(cadet => {
+      if (records[cadet] && records[cadet].current) {
+        delete records[cadet].current.run;
+      }
+    });
+    saveData();
+    renderHistory();
+    initActiveRunners();
+  }
+
+  function initMetricInput(metricKey) {
+    if (metricKey === 'run') {
+      initActiveRunners();
+      return;
+    }
+    const container = document.getElementById(`${metricKey}-container`);
+    if (!container) return;
+    if (selectedCadets.length === 0) {
+      container.innerHTML = '<p class="m">No participants selected. Go to the "Roster" tab to choose cadets.</p>';
+      return;
+    }
+
+    let sortedCadets = [...selectedCadets].sort((a, b) => a.localeCompare(b));
+
+    container.innerHTML = sortedCadets.map(cadet => {
+      const val = (records[cadet] && records[cadet].current && records[cadet].current[metricKey]) ? records[cadet].current[metricKey] : '';
+      const safeVal = String(val).replace(/"/g, '&quot;');
+      const safeEscaped = cadet.replace(/'/g, "\\'");
+      return `
+        <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
+          <strong style="display:block; margin-bottom:6px;">${cadet}</strong>
+          <input type="number" value="${safeVal}" placeholder="Enter score" oninput="autoSaveMetric('${safeEscaped}', '${metricKey}', this.value)" style="margin-bottom:0;">
+        </div>
+      `;
+    }).join('');
+  }
+
+  function autoSaveMetric(cadet, metricKey, value) {
+    const currentDate = new Date().toLocaleDateString();
+    if (!records[cadet]) records[cadet] = {};
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current[metricKey] = value;
+    records[cadet].current.date = currentDate;
+    saveData();
+    renderHistory();
+  }
+
+  function resetMetric(metricKey) {
+    const eventNames = {
+      pacer: 'Pacer',
+      curlups: 'Curl Ups',
+      pushups: 'Pushups',
+      sitreach: 'Sit & Reach'
+    };
+    if (confirm(`Are you sure you want to reset current ${eventNames[metricKey]} scores?`)) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          delete records[cadet].current[metricKey];
+        }
+      }
+      saveData();
+      renderHistory();
+      initMetricInput(metricKey);
+    }
+  }
+
+  function archiveCurrentTest() {
+    if (confirm("Archive current test results into 'Previous Test', reset active scores, and deselect all roster participants?")) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          records[cadet].previous = { ...records[cadet].current };
+          records[cadet].current = {};
+        }
+      }
+      selectedCadets = [];
+      resetHeat();
+      saveData();
+      renderRoster();
+      renderHistory();
+      initActiveRunners();
+      alert("Test day archived and roster deselected successfully!");
+    }
+  }
+
+  function renderHistory() {
+    const historyListEl = document.getElementById('history-list');
+    if (!historyListEl) return;
+
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].current || records[c].previous));
+
+    if (activeCadetsWithRecords.length === 0) {
+      historyListEl.innerHTML = '<p class="m" style="color:var(--mute);">No records recorded yet.</p>';
+    } else {
+      let sortedHistory = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
+      historyListEl.innerHTML = sortedHistory.map(cadet => {
+        const data = records[cadet];
+        const cur = data.current || {};
+        const prev = data.previous || {};
+        return `
+          <div class="history-card">
+            <strong>${cadet}</strong>
+            <div style="margin-top:6px; font-size:0.85rem; font-weight:bold; color:var(--acc);">Current Test (${cur.date || 'No Date'})</div>
+            <div class="metric-boxes">
+              <div class="metric-box">Pacer <span>${cur.pacer || '—'}</span></div>
+              <div class="metric-box">Run <span>${cur.run || '—'}</span></div>
+              <div class="metric-box">Curl <span>${cur.curlups || '—'}</span></div>
+              <div class="metric-box">Push <span>${cur.pushups || '—'}</span></div>
+              <div class="metric-box">Sit&R <span>${cur.sitreach || '—'}</span></div>
+            </div>
+            <div style="margin-top:8px; font-size:0.85rem; font-weight:bold; color:var(--mute);">Previous Test (${prev.date || 'No Date'})</div>
+            <div class="metric-boxes">
+              <div class="metric-box">Pacer <span>${prev.pacer || '—'}</span></div>
+              <div class="metric-box">Run <span>${prev.run || '—'}</span></div>
+              <div class="metric-box">Curl <span>${prev.curlups || '—'}</span></div>
+              <div class="metric-box">Push <span>${prev.pushups || '—'}</span></div>
+              <div class="metric-box">Sit&R <span>${prev.sitreach || '—'}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function exportToCSV() {
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].current || records[c].previous));
+    if (activeCadetsWithRecords.length === 0) {
+      alert("No history to export.");
+      return;
+    }
+
+    let exportList = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Current Date,Current Pacer,Current Run,Current Curl Ups,Current Pushups,Current Sit & Reach,Previous Date,Previous Pacer,Previous Run,Previous Curl Ups,Previous Pushups,Previous Sit & Reach\r\n";
+
+    exportList.forEach(cadet => {
+      let d = records[cadet] || {};
+      let cur = d.current || {};
+      let prev = d.previous || {};
+      let safeCadet = `"${cadet.replace(/"/g, '""')}"`;
+      csvContent += `${safeCadet},${cur.date || ''},${cur.pacer || ''},${cur.run || ''},${cur.curlups || ''},${cur.pushups || ''},${cur.sitreach || ''},${prev.date || ''},${prev.pacer || ''},${prev.run || ''},${prev.curlups || ''},${prev.pushups || ''},${prev.sitreach || ''}\r\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "rccs_fitness_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function clearHistory() {
+    if (confirm("Are you sure you want to clear all current and previous history?")) {
+      records = {};
+      saveData();
+      renderHistory();
+      initActiveRunners();
+    }
+  }
+
+  function initializeApp() {
+    renderRoster();
+    renderHistory();
+    initActiveRunners();
+  }
+</script>
+</body>
+</html>
