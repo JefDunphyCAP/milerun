@@ -152,7 +152,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       return `
         <li>
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
-            <input type="checkbox" value="${c}" ${isChecked} onchange="toggleSelectCadet('${c.replace(/'/g, "\\'")}')" style="width:18px; height:18px;">
+            <input type="checkbox" value="${c}" ${isChecked} onchange="toggleSelectCadet(this)" style="width:18px; height:18px;">
             <span style="font-size:0.95rem">${c}</span>
           </label>
           <button onclick="removeCadet(${i})" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
@@ -161,12 +161,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }).join('');
   }
 
-  function toggleSelectCadet(cadetName) {
-    const index = selectedCadets.indexOf(cadetName);
-    if (index > -1) {
-      selectedCadets.splice(index, 1);
+  function toggleSelectCadet(checkbox) {
+    const cadetName = checkbox.value;
+    if (checkbox.checked) {
+      if (!selectedCadets.includes(cadetName)) {
+        selectedCadets.push(cadetName);
+      }
     } else {
-      selectedCadets.push(cadetName);
+      selectedCadets = selectedCadets.filter(c => c !== cadetName);
     }
     saveData();
   }
@@ -223,12 +225,12 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       const isDone = finishedTime ? "done-time" : "";
       
       return `
-        <div class="runner-row" id="runner-row-${CSS.escape(cadet)}">
+        <div class="runner-row">
           <div>
             <strong>${cadet}</strong><br>
             <span class="time-display ${isDone}" id="time-${CSS.escape(cadet)}">${displayTxt}</span>
           </div>
-          <button class="stop-btn" id="btn-${CSS.escape(cadet)}" onclick="stopRunner('${cadet.replace(/'/g, "\\'")}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
+          <button class="stop-btn" onclick="stopRunner('${cadet.replace(/'/g, "\\'")}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
         </div>
       `;
     }).join('');
@@ -298,7 +300,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       return;
     }
     
-    // Sort copy for export matching history display
     let exportList = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
 
     let csvContent = "data:text/csv;charset=utf-8,Cadet,Time,Date\r\n";
@@ -321,7 +322,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     if (history.length === 0) {
       historyListEl.innerHTML = '<li class="m" style="color:var(--mute);">No runs recorded yet.</li>';
     } else {
-      // Sort history alphabetically by cadet name for display
       let sortedHistory = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
 
       historyListEl.innerHTML = sortedHistory.map(h => `
