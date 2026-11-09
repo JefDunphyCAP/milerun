@@ -73,7 +73,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   </nav>
 
   <!-- Second Row: Event Tabs -->
-  <nav>
+  <nav id="nav-events">
     <button data-v="pacer">Pacer</button>
     <button data-v="run">Mile Run</button>
     <button data-v="curlups">Curl Ups</button>
@@ -201,12 +201,12 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
   });
 
-  const buttons = document.querySelectorAll('nav button');
+  const allNavButtons = document.querySelectorAll('nav button');
   const sections = document.querySelectorAll('.view-section');
 
-  buttons.forEach(button => {
+  allNavButtons.forEach(button => {
     button.addEventListener('click', () => {
-      buttons.forEach(btn => btn.classList.remove('on'));
+      allNavButtons.forEach(btn => btn.classList.remove('on', 'p'));
       button.classList.add('on');
       const targetView = button.getAttribute('data-v');
       sections.forEach(section => {
@@ -582,3 +582,25 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "rccs_fitness_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function clearHistory() {
+    if (confirm("Are you sure you want to clear all current and previous history?")) {
+      records = {};
+      saveData();
+      renderHistory();
+      initActiveRunners();
+    }
+  }
+
+  function initializeApp() {
+    renderRoster();
+    renderHistory();
+    initActiveRunners();
+  }
+</script>
+</body>
+</html>
