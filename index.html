@@ -17,6 +17,7 @@ button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--l
 button.on,button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+.clock{font-size:3rem;font-weight:700;font-variant-numeric:tabular-nums;text-align:center;margin:12px 0}
 input,select{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
 .g{display:flex;gap:8px;flex-wrap:wrap}.g>*{flex:1}
 .msg{min-height:1.4em;color:var(--mute);margin-bottom:8px}
@@ -24,7 +25,7 @@ input,select{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--
 .view-section.active { display: block; }
 ul { padding-left: 20px; margin: 8px 0; }
 li { margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-.del-btn { background: #dc2626; color: white; border: none; padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; }
+.del-btn { background: #dc2626; color: white; border: none; padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -38,14 +39,25 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
 
 <!-- Run View -->
 <div id="view-run" class="view-section active card">
-  <h2>Record Cadet Run</h2>
+  <h2>Live Run Timer</h2>
+  <div id="stopwatch" class="clock">00:00.0</div>
+  
+  <div class="g" style="margin-bottom:12px;">
+    <button onclick="startTimer()" class="p">Start</button>
+    <button onclick="pauseTimer()">Pause</button>
+    <button onclick="resetTimer()" style="background:#dc2626;color:white;border-color:#dc2626;">Reset</button>
+  </div>
+
+  <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
+
+  <h2>Save Run Time</h2>
   <label for="run-cadet-select">Select Cadet:</label>
   <select id="run-cadet-select">
-    <option value="">-- Add cadets in Roster first --</option>
+    <option value="">-- Select Cadet --</option>
   </select>
   
   <label for="run-time-input">Time (MM:SS):</label>
-  <input type="text" id="run-time-input" placeholder="e.g. 07:45">
+  <input type="text" id="run-time-input" placeholder="e.g. 07:45 or use timer above">
   
   <button onclick="saveRun()" class="p" style="width:100%">Save Run Time</button>
   <p id="run-msg" class="msg" style="margin-top:8px;"></p>
@@ -55,10 +67,10 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
 <div id="view-roster" class="view-section card">
   <h2>Manage Roster</h2>
   <div class="g">
-    <input type="text" id="cadet-name-input" placeholder="Cadet Full Name">
+    <input type="text" id="cadet-name-input" placeholder="Cadet Name & ID">
     <button onclick="addCadet()" class="p">Add Cadet</button>
   </div>
-  <h3>Roster List</h3>
+  <h3>Roster List (<span id="cadet-count">0</span>)</h3>
   <ul id="cadet-list">
     <li class="m" style="color:var(--mute);">No cadets added yet.</li>
   </ul>
@@ -88,8 +100,67 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
     });
   });
 
-  // App Data State (stored in browser localStorage so it saves on your phone)
-  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || [];
+  // Default Roster List provided
+  const defaultCadets = [
+    "Acuna, Matias Ignacio (790941)",
+    "Adapala, Advik (744636)",
+    "Allabanda, Nithik Uppara (722865)",
+    "Allyn, Tyler Aiden (720946)",
+    "Bengtson, Calan Michael (771315)",
+    "Binoji, Amiliya Mariyah (734971)",
+    "Brogan, Samantha Rose (710771)",
+    "Chen, Jesse (755512)",
+    "Danve, Shrirang Abhijeet (723615)",
+    "Doshi, Raji (754508)",
+    "Doss, Namasya (792128)",
+    "Dunphy, Carter David (732388)",
+    "Garcia, Matthew Javier (734393)",
+    "Groeper, Hayden Elise (791123)",
+    "Gurunathamoorthy, Dakshin (714521)",
+    "Jesudowich, Nathan Kenneth (732627)",
+    "Kamal, Mahek (791736)",
+    "Kankipati, Suhaas (744637)",
+    "Karnik, Ahan Amit (706314)",
+    "Karthik, Sai A (761259)",
+    "Kaur, Seerat (771375)",
+    "Kulkarni, Iha Kedar (758640)",
+    "Kulkarni, Rishita Kedar (711214)",
+    "Kuntey, Neev Harshad (791307)",
+    "Lewis, Spencer Ross (772156)",
+    "Lukaszczyk, Paulina Zuzanna (771802)",
+    "Malash, Kara Elizabeth (771546)",
+    "Malinowski, Enzo (744303)",
+    "Modi, Prasun Hemang (698702)",
+    "Montstream, Sawyer Haiden (771396)",
+    "Moray, Evan (736140)",
+    "Muniz, Xavier Jose (790284)",
+    "Muthukumar, Nandha (755517)",
+    "Pal, Aniron, (720392)",
+    "Pande, Maanit (734099)",
+    "Prasanna, Harshitha (744634)",
+    "Putchkayala, Yashwanth (754510)",
+    "Rahman, Muhammad zarif (792880)",
+    "Rajasekar, Dheeraj (744638)",
+    "Raum, Niall (738850)",
+    "Rivera, Isaias Evaristo (719365)",
+    "Sabins, Keegan Henry (724026)",
+    "Sagar, Aadhya Prem (792176)",
+    "Saraf, Akshit Saket (722848)",
+    "Sawarkar, Aradhya (743453)",
+    "Shah, Mehaan Hardik (775798)",
+    "Singh, Akshat (779732)",
+    "Singh, Ranveer (772183)",
+    "Singh, Rishi (661050)",
+    "Snell, Dresden (735627)",
+    "Sohagiya, Harshiv (722861)",
+    "Sundararaman, Vanshika (772163)",
+    "Tandon, Shriansh (733616)",
+    "Vishwakarma, Aarav (773069)",
+    "Xia, Anlang, (792179)"
+  ];
+
+  // App Data State (loads default list if none saved yet)
+  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || defaultCadets;
   let history = JSON.parse(localStorage.getItem('rccs_history')) || [];
 
   function saveData() {
@@ -115,6 +186,46 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
     renderAll();
   }
 
+  // Stopwatch Logic
+  let startTime = 0;
+  let elapsedBeforePause = 0;
+  let timerInterval = null;
+  let isRunning = false;
+
+  function updateClockDisplay(timeInMs) {
+    let totalSecs = Math.floor(timeInMs / 1000);
+    let mins = Math.floor(totalSecs / 60);
+    let secs = totalSecs % 60;
+    let tenths = Math.floor((timeInMs % 1000) / 100);
+
+    let formattedMins = String(mins).padStart(2, '0');
+    let formattedSecs = String(secs).padStart(2, '0');
+    
+    document.getElementById('stopwatch').textContent = `${formattedMins}:${formattedSecs}.${tenths}`;
+  }
+
+  function startTimer() {
+    if (isRunning) return;
+    isRunning = true;
+    startTime = Date.now() - elapsedBeforePause;
+    timerInterval = setInterval(() => {
+      elapsedBeforePause = Date.now() - startTime;
+      updateClockDisplay(elapsedBeforePause);
+    }, 100);
+  }
+
+  function pauseTimer() {
+    if (!isRunning) return;
+    isRunning = false;
+    clearInterval(timerInterval);
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    elapsedBeforePause = 0;
+    updateClockDisplay(0);
+  }
+
   // Run Logging
   function saveRun() {
     const select = document.getElementById('run-cadet-select');
@@ -122,19 +233,24 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
     const msg = document.getElementById('run-msg');
     
     const cadet = select.value;
-    const time = timeInput.value.trim();
+    let time = timeInput.value.trim();
+
+    if (!time && elapsedBeforePause > 0) {
+      time = document.getElementById('stopwatch').textContent;
+    }
 
     if (!cadet) {
       msg.textContent = "Please select a cadet.";
       return;
     }
-    if (!time) {
-      msg.textContent = "Please enter a run time.";
+    if (!time || time === "00:00.0") {
+      msg.textContent = "Please enter or run a valid time.";
       return;
     }
 
     history.unshift({ cadet, time, date: new Date().toLocaleDateString() });
     timeInput.value = '';
+    resetTimer();
     msg.textContent = `Saved run for ${cadet}!`;
     saveData();
     renderAll();
@@ -144,18 +260,18 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
 
   // Render All UI Elements
   function renderAll() {
-    // Render Roster List
+    document.getElementById('cadet-count').textContent = cadets.length;
+
     const cadetListEl = document.getElementById('cadet-list');
     if (cadets.length === 0) {
       cadetListEl.innerHTML = '<li style="color:var(--mute);">No cadets added yet.</li>';
     } else {
       cadetListEl.innerHTML = cadets.map((c, i) => `
-        <span>${c}</span>
+        <span style="font-size:0.95rem">${c}</span>
         <button class="del-btn" onclick="removeCadet(${i})">Delete</button>
       `).join('');
     }
 
-    // Render Dropdown Select
     const selectEl = document.getElementById('run-cadet-select');
     if (cadets.length === 0) {
       selectEl.innerHTML = '<option value="">-- Add cadets in Roster first --</option>';
@@ -164,7 +280,6 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
         cadets.map(c => `<option value="${c}">${c}</option>`).join('');
     }
 
-    // Render History List
     const historyListEl = document.getElementById('history-list');
     if (history.length === 0) {
       historyListEl.innerHTML = '<li style="color:var(--mute);">No runs recorded yet.</li>';
@@ -176,7 +291,6 @@ li { margin-bottom: 6px; display: flex; justify-content: space-between; align-it
     }
   }
 
-  // Initial load render
   renderAll();
 </script>
 </body>
