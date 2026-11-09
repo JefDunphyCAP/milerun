@@ -1,355 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RCCS Cadet Mile Run Tracker</title>
-<link rel="icon" href="data:,">
-<style>
-:root{--bg:#f3f5f8;--card:#fff;--ink:#14213d;--mute:#5b6577;--acc:#1d4ed8;--ok:#15803d;--line:#d5dae3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1624;--card:#18223a;--ink:#e8edf7;--mute:#9aa6bd;--acc:#6b9bff;--ok:#4ade80;--line:#2b3956}}
-*{box-sizing:border-box}html{color-scheme:light dark}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:12px;max-width:640px;margin-inline:auto}
-h1{font-size:1.3rem;margin:4px 0 10px}h2{font-size:1.05rem;margin:0 0 8px}
-nav{display:flex;gap:6px;margin-bottom:12px}
-nav button{flex:1}
-button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-button.on,button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
-button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
-.clock{font-size:2.8rem;font-weight:700;font-variant-numeric:tabular-nums;text-align:center;margin:8px 0;letter-spacing:1px;}
-input[type="text"]{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
-.g{display:flex;gap:8px;flex-wrap:wrap}.g>*{flex:1}
-.msg{min-height:1.4em;color:var(--mute);margin-bottom:8px}
-.view-section { display: none; }
-.view-section.active { display: block; }
-ul { padding-left: 0; list-style: none; margin: 8px 0; }
-li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
-.runner-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.stop-btn { background: #dc2626; color: white; border: none; padding: 8px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-.stop-btn:disabled { background: #9ca3af; cursor: not-allowed; }
-.time-display { font-variant-numeric: tabular-nums; font-weight: bold; font-size: 1.1rem; }
-.done-time { color: var(--ok); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mile Run Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        /* Login Overlay Styles */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 300px;
+        }
+        .login-box h2 {
+            margin-top: 0;
+            color: #1a1a1a;
+        }
+        .login-box input {
+            width: 80%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .login-box button {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .login-box button:hover {
+            background-color: #004085;
+        }
+        .error-msg {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        /* Main App Container */
+        #app-container {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
-<h1>RCCS Cadet Mile Run Tracker</h1>
 
-<nav>
-  <button data-v="run" class="on">Active Heat</button>
-  <button data-v="roster">Roster</button>
-  <button data-v="hist">History</button>
-</nav>
-
-<!-- Run Heat View -->
-<div id="view-run" class="view-section active card">
-  <h2>Timer</h2>
-  
-  <div id="master-clock" class="clock">00:00.0</div>
-
-  <div class="g" style="margin-bottom:16px;">
-    <button onclick="startHeat()" class="p" id="start-heat-btn">Start All Runners</button>
-    <button onclick="resetHeat()" style="background:#dc2626;color:white;border-color:#dc2626;">Reset Heat</button>
-  </div>
-
-  <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
-
-  <h3>Participants</h3>
-  <div id="active-runners-container">
-    <p class="m">No runners selected. Go to the "Roster" tab to choose cadets for this heat.</p>
-  </div>
-  <p id="run-msg" class="msg" style="margin-top:12px;"></p>
-</div>
-
-<!-- Roster View -->
-<div id="view-roster" class="view-section card">
-  <h2>Select Participants for Heat</h2>
-  <div style="margin-bottom: 12px; display:flex; gap:6px;">
-    <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
-    <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
-  </div>
-
-  <div class="g" style="margin-bottom: 12px;">
-    <input type="text" id="cadet-name-input" placeholder="Add custom cadet name & ID">
-    <button onclick="addCadet()" class="p">Add</button>
-  </div>
-
-  <h3>Roster (<span id="cadet-count">0</span>)</h3>
-  <ul id="cadet-select-list"></ul>
-</div>
-
-<!-- History View -->
-<div id="view-hist" class="view-section card">
-  <h2>Run History</h2>
-  <div style="display:flex; gap:8px; margin-bottom:12px;">
-    <button onclick="exportToCSV()" class="p" style="font-size:0.85rem; flex:1;">Download CSV for Sheets</button>
-    <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear History</button>
-  </div>
-  <ul id="history-list">
-    <li class="m" style="color:var(--mute);">No runs recorded yet.</li>
-  </ul>
-</div>
-
-<script>
-  // Tab Switching
-  const buttons = document.querySelectorAll('nav button');
-  const sections = document.querySelectorAll('.view-section');
-
-  buttons.forEach(button => {
-    button.addEventListener('click', () => {
-      buttons.forEach(btn => btn.classList.remove('on'));
-      button.classList.add('on');
-      const targetView = button.getAttribute('data-v');
-      sections.forEach(section => {
-        section.classList.toggle('active', section.id === 'view-' + targetView);
-      });
-      if(targetView === 'run') {
-        initActiveRunners();
-      }
-    });
-  });
-
-  const defaultCadets = [
-    "Acuna, Matias Ignacio (790941)", "Adapala, Advik (744636)", "Allabanda, Nithik Uppara (722865)",
-    "Allyn, Tyler Aiden (720946)", "Bengtson, Calan Michael (771315)", "Binoji, Amiliya Mariyah (734971)",
-    "Brogan, Samantha Rose (710771)", "Chen, Jesse (755512)", "Danve, Shrirang Abhijeet (723615)",
-    "Doshi, Raji (754508)", "Doss, Namasya (792128)", "Dunphy, Carter David (732388)",
-    "Garcia, Matthew Javier (734393)", "Groeper, Hayden Elise (791123)", "Gurunathamoorthy, Dakshin (714521)",
-    "Jesudowich, Nathan Kenneth (732627)", "Kamal, Mahek (791736)", "Kankipati, Suhaas (744637)",
-    "Karnik, Ahan Amit (706314)", "Karthik, Sai A (761259)", "Kaur, Seerat (771375)",
-    "Kulkarni, Iha Kedar (758640)", "Kulkarni, Rishita Kedar (711214)", "Kuntey, Neev Harshad (791307)",
-    "Lewis, Spencer Ross (772156)", "Lukaszczyk, Paulina Zuzanna (771802)", "Malash, Kara Elizabeth (771546)",
-    "Malinowski, Enzo (744303)", "Modi, Prasun Hemang (698702)", "Montstream, Sawyer Haiden (771396)",
-    "Moray, Evan (736140)", "Muniz, Xavier Jose (790284)", "Muthukumar, Nandha (755517)",
-    "Pal, Aniron, (720392)", "Pande, Maanit (734099)", "Prasanna, Harshitha (744634)",
-    "Putchkayala, Yashwanth (754510)", "Rahman, Muhammad zarif (792880)", "Rajasekar, Dheeraj (744638)",
-    "Raum, Niall (738850)", "Rivera, Isaias Evaristo (719365)", "Sabins, Keegan Henry (724026)",
-    "Sagar, Aadhya Prem (792176)", "Saraf, Akshit Saket (722848)", "Sawarkar, Aradhya (743453)",
-    "Shah, Mehaan Hardik (775798)", "Singh, Akshat (779732)", "Singh, Ranveer (772183)",
-    "Singh, Rishi (661050)", "Snell, Dresden (735627)", "Sohagiya, Harshiv (722861)",
-    "Sundararaman, Vanshika (772163)", "Tandon, Shriansh (733616)", "Vishwakarma, Aarav (773069)",
-    "Xia, Anlang, (792179)"
-  ];
-
-  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || defaultCadets;
-  let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
-  let history = JSON.parse(localStorage.getItem('rccs_history')) || [];
-
-  cadets.sort((a, b) => a.localeCompare(b));
-
-  function saveData() {
-    localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
-    localStorage.setItem('rccs_selected', JSON.stringify(selectedCadets));
-    localStorage.setItem('rccs_history', JSON.stringify(history));
-  }
-
-  function renderRoster() {
-    document.getElementById('cadet-count').textContent = cadets.length;
-    const listEl = document.getElementById('cadet-select-list');
-    
-    listEl.innerHTML = cadets.map((c) => {
-      const isChecked = selectedCadets.includes(c) ? 'checked' : '';
-      return `
-        <li>
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
-            <input type="checkbox" value="${c.replace(/"/g, '&quot;')}" ${isChecked} onchange="toggleSelect(this)" style="width:18px; height:18px;">
-            <span style="font-size:0.95rem">${c}</span>
-          </label>
-          <button onclick="removeCadet('${c.replace(/'/g, "\\'")}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
-        </li>
-      `;
-    }).join('');
-  }
-
-  function toggleSelect(checkbox) {
-    const cadetName = checkbox.value;
-    if (checkbox.checked) {
-      if (!selectedCadets.includes(cadetName)) {
-        selectedCadets.push(cadetName);
-      }
-    } else {
-      selectedCadets = selectedCadets.filter(c => c !== cadetName);
-    }
-    saveData();
-  }
-
-  function selectAll(select) {
-    selectedCadets = select ? [...cadets] : [];
-    saveData();
-    renderRoster();
-  }
-
-  function addCadet() {
-    const input = document.getElementById('cadet-name-input');
-    const name = input.value.trim();
-    if (!name) return;
-    if (!cadets.includes(name)) {
-      cadets.push(name);
-      cadets.sort((a, b) => a.localeCompare(b));
-    }
-    input.value = '';
-    saveData();
-    renderRoster();
-  }
-
-  function removeCadet(cadetName) {
-    cadets = cadets.filter(c => c !== cadetName);
-    selectedCadets = selectedCadets.filter(c => c !== cadetName);
-    saveData();
-    renderRoster();
-  }
-
-  function formatTime(ms) {
-    let totalSecs = Math.floor(ms / 1000);
-    let mins = Math.floor(totalSecs / 60);
-    let secs = totalSecs % 60;
-    let tenths = Math.floor((ms % 1000) / 100);
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
-  }
-
-  let heatStartTime = null;
-  let heatInterval = null;
-  let runnerTimes = {}; 
-
-  function initActiveRunners() {
-    const container = document.getElementById('active-runners-container');
-    if (selectedCadets.length === 0) {
-      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster" tab to choose cadets.</p>';
-      return;
-    }
-
-    let sortedRunners = [...selectedCadets].sort((a, b) => {
-      let aDone = runnerTimes[a] ? 1 : 0;
-      let bDone = runnerTimes[b] ? 1 : 0;
-      if (aDone !== bDone) return aDone - bDone;
-      return a.localeCompare(b);
-    });
-
-    container.innerHTML = sortedRunners.map(cadet => {
-      const finishedTime = runnerTimes[cadet];
-      const displayTxt = finishedTime ? finishedTime : "00:00.0";
-      const isDone = finishedTime ? "done-time" : "";
-      
-      return `
-        <div class="runner-row">
-          <div>
-            <strong>${cadet}</strong><br>
-            <span class="time-display ${isDone}" id="time-${CSS.escape(cadet)}">${displayTxt}</span>
-          </div>
-          <button class="stop-btn" onclick="stopRunner('${cadet.replace(/'/g, "\\'")}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
+    <!-- Login Screen Overlay -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>Site Access</h2>
+            <p>Please enter the password to continue.</p>
+            <input type="password" id="password-input" placeholder="Password">
+            <br>
+            <button onclick="checkPassword()">Enter</button>
+            <div id="error-msg" class="error-msg">Incorrect password. Please try again.</div>
         </div>
-      `;
-    }).join('');
-  }
+    </div>
 
-  function startHeat() {
-    if (selectedCadets.length === 0) {
-      alert("Please select at least one cadet in the Roster tab first.");
-      return;
-    }
-    if (heatStartTime) return; 
+    <!-- Main Application Content -->
+    <div id="app-container">
+        <h1>Mile Run Tracker</h1>
+        <p>Welcome to the tracker! You have successfully logged in.</p>
+        <!-- Your existing tracker content goes here -->
+    </div>
 
-    heatStartTime = Date.now();
-    runnerTimes = {};
-    initActiveRunners();
+    <script>
+        function checkPassword() {
+            const inputVal = document.getElementById('password-input').value;
+            const correctPassword = 'RCCSmile';
+            const errorMsg = document.getElementById('error-msg');
 
-    document.getElementById('start-heat-btn').style.background = '#9ca3af';
-
-    heatInterval = setInterval(() => {
-      const elapsed = Date.now() - heatStartTime;
-
-      if (heatStartTime) {
-        document.getElementById('master-clock').textContent = formatTime(elapsed);
-      }
-
-      selectedCadets.forEach(cadet => {
-        if (!runnerTimes[cadet]) {
-          const timeEl = document.getElementById(`time-${CSS.escape(cadet)}`);
-          if (timeEl) timeEl.textContent = formatTime(elapsed);
+            if (inputVal === correctPassword) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('password-input').value = '';
+            }
         }
-      });
-    }, 100);
-  }
 
-  function stopRunner(cadet) {
-    if (!heatStartTime) return;
-    const elapsed = Date.now() - heatStartTime;
-    const formatted = formatTime(elapsed);
+        // Allow pressing 'Enter' to submit the password
+        document.getElementById('password-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+    </script>
 
-    runnerTimes[cadet] = formatted;
-
-    history.push({ cadet, time: formatted, date: new Date().toLocaleDateString() });
-    saveData();
-    renderHistory();
-    initActiveRunners(); 
-
-    const allFinished = selectedCadets.every(c => runnerTimes[c]);
-    if (allFinished) {
-      clearInterval(heatInterval);
-      heatStartTime = null; 
-      document.getElementById('start-heat-btn').style.background = '';
-    }
-  }
-
-  function resetHeat() {
-    clearInterval(heatInterval);
-    heatStartTime = null;
-    runnerTimes = {};
-    document.getElementById('master-clock').textContent = "00:00.0";
-    document.getElementById('start-heat-btn').style.background = '';
-    initActiveRunners();
-  }
-
-  function exportToCSV() {
-    if (history.length === 0) {
-      alert("No run history to export.");
-      return;
-    }
-    
-    let exportList = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
-
-    let csvContent = "data:text/csv;charset=utf-8,Cadet,Time,Date\r\n";
-    exportList.forEach(h => {
-      let safeCadet = `"${h.cadet.replace(/"/g, '""')}"`;
-      csvContent += `${safeCadet},${h.time},${h.date}\r\n`;
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "rccs_mile_run_history.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function renderHistory() {
-    const historyListEl = document.getElementById('history-list');
-    if (history.length === 0) {
-      historyListEl.innerHTML = '<li class="m" style="color:var(--mute);">No runs recorded yet.</li>';
-    } else {
-      let sortedHistory = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
-
-      historyListEl.innerHTML = sortedHistory.map(h => `
-        <li style="display:flex; justify-content:space-between; align-items:center;">
-          <span><strong>${h.cadet}</strong> - <span style="color:var(--ok); font-weight:bold;">${h.time}</span></span>
-          <span style="color:var(--mute); font-size:0.85rem">${h.date}</span>
-        </li>
-      `).join('');
-    }
-  }
-
-  function clearHistory() {
-    if (confirm("Are you sure you want to clear all history?")) {
-      history = [];
-      saveData();
-      renderHistory();
-    }
-  }
-
-  renderRoster();
-  renderHistory();
-  initActiveRunners();
-</script>
 </body>
 </html>
