@@ -464,14 +464,15 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
           records[cadet].current = {};
         }
       }
-      // Deselect all cadets
+      
+      // Deselect all cadets and update UI immediately
       selectedCadets = [];
       
       // Reset timer if running
       resetHeat();
 
       saveData();
-      renderRoster();
+      renderRoster();     // <--- Refreshes checkbox states on the Roster tab
       renderHistory();
       initActiveRunners();
       
