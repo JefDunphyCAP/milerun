@@ -458,4 +458,114 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
           delete records[cadet].current[metricKey];
         }
       }
-     
+      saveData();
+      renderHistory();
+      initMetricInput(metricKey);
+    }
+  }
+
+  function archiveCurrentTest() {
+    if (confirm("Archive current test results into 'Previous Test', reset active scores, and deselect all roster participants?")) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          records[cadet].previous = { ...records[cadet].current };
+          records[cadet].current = {};
+        }
+      }
+      
+      selectedCadets = [];
+      resetHeat();
+
+      saveData();
+      renderRoster();
+      renderHistory();
+      initActiveRunners();
+      
+      alert("Test day archived and roster deselected successfully!");
+    }
+  }
+
+  function renderHistory() {
+    const historyListEl = document.getElementById('history-list');
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].current || records[c].previous));
+
+    if (activeCadetsWithRecords.length === 0) {
+      historyListEl.innerHTML = '<p class="m" style="color:var(--mute);">No records recorded yet.</p>';
+    } else {
+      let sortedHistory = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
+
+      historyListEl.innerHTML = sortedHistory.map(cadet => {
+        const data = records[cadet];
+        const cur = data.current || {};
+        const prev = data.previous || {};
+        return `
+          <div class="history-card">
+            <strong>${cadet}</strong>
+            
+            <div style="margin-top:6px; font-size:0.85rem; font-weight:bold; color:var(--acc);">Current Test (${cur.date || 'No Date'})</div>
+            <div class="metric-boxes">
+              <div class="metric-box">Run <span>${cur.run || '—'}</span></div>
+              <div class="metric-box">Curl <span>${cur.curlups || '—'}</span></div>
+              <div class="metric-box">Push <span>${cur.pushups || '—'}</span></div>
+              <div class="metric-box">Sit&R <span>${cur.sitreach || '—'}</span></div>
+            </div>
+
+            <div style="margin-top:8px; font-size:0.85rem; font-weight:bold; color:var(--mute);">Previous Test (${prev.date || 'No Date'})</div>
+            <div class="metric-boxes">
+              <div class="metric-box">Run <span>${prev.run || '—'}</span></div>
+              <div class="metric-box">Curl <span>${prev.curlups || '—'}</span></div>
+              <div class="metric-box">Push <span>${prev.pushups || '—'}</span></div>
+              <div class="metric-box">Sit&R <span>${prev.sitreach || '—'}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function exportToCSV() {
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].current || records[c].previous));
+    if (activeCadetsWithRecords.length === 0) {
+      alert("No history to export.");
+      return;
+    }
+    
+    let exportList = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
+
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Current Date,Current Run,Current Curl Ups,Current Pushups,Current Sit & Reach,Previous Date,Previous Run,Previous Curl Ups,Previous Pushups,Previous Sit & Reach\r\n";
+    exportList.forEach(cadet => {
+      let d = records[cadet] || {};
+      let cur = d.current || {};
+      let prev = d.previous || {};
+      let safeCadet = `"${cadet.replace(/"/g, '""')}"`;
+      csvContent += `${safeCadet},${cur.date || ''},${cur.run || ''},${cur.curlups || ''},${cur.pushups || ''},${cur.sitreach || ''},${prev.date || ''},${prev.run || ''},${prev.curlups || ''},${prev.pushups || ''},${prev.sitreach || ''}\r\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "rccs_fitness_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function clearHistory() {
+    if (confirm("Are you sure you want to clear all current and previous history?")) {
+      records = {};
+      saveData();
+      renderHistory();
+      initActiveRunners();
+    }
+  }
+
+  function initializeApp() {
+    renderRoster();
+    renderHistory();
+    initActiveRunners();
+  }
+
+  document.getElementById('password-input').focus();
+</script>
+</body>
+</html>
