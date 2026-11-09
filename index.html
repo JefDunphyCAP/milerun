@@ -37,13 +37,13 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
 <nav>
   <button data-v="run" class="on">Active Heat</button>
-  <button data-v="roster">Roster & Select</button>
+  <button data-v="roster">Roster</button>
   <button data-v="hist">History</button>
 </nav>
 
 <!-- Run Heat View -->
 <div id="view-run" class="view-section active card">
-  <h2>Mass Heat Timer</h2>
+  <h2>Timer</h2>
   
   <div id="master-clock" class="clock">00:00.0</div>
 
@@ -56,7 +56,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   <h3>Participants</h3>
   <div id="active-runners-container">
-    <p class="m">No runners selected. Go to the "Roster & Select" tab to choose cadets for this heat.</p>
+    <p class="m">No runners selected. Go to the "Roster" tab to choose cadets for this heat.</p>
   </div>
   <p id="run-msg" class="msg" style="margin-top:12px;"></p>
 </div>
@@ -207,7 +207,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   function initActiveRunners() {
     const container = document.getElementById('active-runners-container');
     if (selectedCadets.length === 0) {
-      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster & Select" tab to choose cadets.</p>';
+      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster" tab to choose cadets.</p>';
       return;
     }
 
@@ -294,7 +294,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     
     let csvContent = "data:text/csv;charset=utf-8,Cadet,Time,Date\r\n";
     history.forEach(h => {
-      // Escape commas in names if any
       let safeCadet = `"${h.cadet.replace(/"/g, '""')}"`;
       csvContent += `${safeCadet},${h.time},${h.date}\r\n`;
     });
