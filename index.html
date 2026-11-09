@@ -164,7 +164,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   function checkPassword() {
     const inputVal = document.getElementById('password-input').value;
     
-    // Direct password check
     if (inputVal === "RCCSmile") {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('app-content').style.display = 'block';
@@ -205,26 +204,26 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     });
   });
 
-  const rawEncodedCadets = [
-    "QWN1bmEsIE1hdGlhcyBJZ25hY2lvICg3OTA5NDEp", "QWRhcGFsYSwgQWR2aWsgKDc0NDYzNik=", "QWxsYWJhbmRhLCBOaXRoaWsgVXBwYXJhICg3MjI4NjUp",
-    "QWxseW4sIFR5bGVyIEFpZGVuICg3MjA5NDYp", "QmVuZ3Rzb24sIENhbGFuIE1pY2hhZWwgKDc3MTMxNSk=", "Qmlub2ppLCBBbWlsaXlhIE1hcml5YWggKDczNDk3MSk=",
-    "QnJvZ2ansyBTYW1hbnRoYSBSb3NlICg3MTA3NzEp".replace('jsy', 'Cw'), "Q2hlbiwgSmVzc2UgKDc1NTUxMik=", "RGFudmUsIFNocmlyYW5nIEFiaGhqZWV0ICg3MjM2MTUp".replace('hhj','rag A'),
-    "RG9zaGksIFJhamkgKDc1NDUwOCk=", "RG9zcywgTmFtYXN5YSAoNzkyMTI4KQ==", "RHVucGh5LCBDYXJ0ZXIgRGF2aWQgKDczMjM4OCk=",
-    "R2FyY2lhLCBNYXR0aGV3IEphdmllciAoNzM0MzkzKQ==", "R3JvZXBlciwgSGF5ZGVuIEVsaXNlICg3OTExMjMp", "R3VydW5hdGhhbW9vcnRoeSwgRGFrc2hpbiAoNzE0NTIxKQ==",
-    "SmVzdWRvd2ljaCwgTmF0aGFuIEtlbm5ldGggKDczMjYyNyk=", "S2FtYWwsIE1haGVrICg3OTE3MzYp", "S2Fua2lwYXRpLCBTdWhhYXMgKDc0NDYzNyk=",
-    "S2FybmlrLCBBaGFuIEFtaXQgNzA2MzE0".replace('N', 'l').replace('K', '('), "S2FydGhpaywgU2FpIEEgKDc2MTI1OSk=", "S2F1ciwgU2VlcmF0ICg3NzEzNzUp",
-    "S3Vsa2FybmksIEloYSBLZWRhciAoNzU4NjQwKQ==", "S3Vsa2FybmksIFJpc2hpdGEgS2VkYXIgKDcxMTIxNCk=", "S3VudGV5LCBOZWV2IEhhcnNoYWQgNzkxMzA3".replace('7', '(').replace('3', ')'),
-    "TGV3aXMsIFNwZW5jZXIgUm9zcyAoNzcyMTU2KQ==", "THVrYXN6Y3p5dywgUGF1bGluYSBadXphbm5hICg3NzE4MDIp", "TWFsYXNoLCBLYXJhIEVsaXphYmV0aCAoNzcxNTQ2KQ==",
-    "TWFsaW5vd3NraSwgRW56byAoNzQ0MzAzKQ==", "TW9kaSwgUHJhc3VuIEhlbWFuZyAoNjk4NzAyKQ==", "TW9uc3RyZWFtLCBTYXd5ZXIgSGFpZGVuICg3NzEzOTYp",
-    "TW9yYXksIEV2YW4gKDczNjE0MCk=", "TXVuaXosIFhhdmllciBKb3NlICg3OTAyODQp", "TXV0aHVrdW1hciwgTmFuZGhhICg3NTU1MTcp",
-    "UGFsLCBBbmlyb24sICg3MjAzOTIp", "UGFuZGUsIE1hYW5pdCAoNzM0MDk5KQ==", "UHJhc2FubmEsIEhhcnNoaXRoYSAoNzQ0NjM0KQ==",
-    "UHV0Y2hrYXlhbGEsIFlhc2h3YW50aCAoNzU0NTEwKQ==", "UmFobWFuLCBNdWhhbW1hZCB6YXJpZiAoNzkyODgwKQ==", "UmFqYXNla2FyLCBEaGVlcmFqICg3NDQ2Mzgp",
-    "UmF1bSwgTmlhbGwgKDczODg1MCk=", "Uml2ZXJhLCBJc2FpYXMgRXZhcmlzdG8gKDcxOTM2NSk=", "U2FiaW5zLCBLZWVnYW4gSGVucnkgKDcyNDAyNik=",
-    "U2FnYXIsIEFhZGh5YSBQcmVtICg3OTIxNzYp", "U2FyYWYsIEFrc2hpdCBTYWtldCAoNzIyODQ4KQ==", "U2F3YXJrYXIsIEFyYWRoeWEgKDc0MzQ1Myk=",
-    "U2hhaCwgTWVoYWFuIEhhcmRikjAoNzc1Nzk4KQ==".replace('j0','h'), "U2luZ2gsIEFrc2hhdCAoNzc5NzMyKQ==", "U2luZ2gsIFJhbnZlZXIgKDc3MjE4Myk=",
-    "U2luZ2gsIFJpc2hpICg2NjEwNTAp", "U25lbGwsIERyZXNkZW4gKDczNTYyNyk=", "U29oYWdpeWEsIEhhcnNoaXYgKDIyODYxKQ==".replace('2', '7'),
-    "U3VuZGFyYXJhbWFuLCBWYW5zaGlrYSAoNzcyMTYzKQ==", "VGFuZG9uLCBTaHJpYW5zaCAoNzMzNjE2KQ==", "VmlzaHdha2FybWEsIEFhcmF2ICg3NzMwNjkp",
-    "WGlhLCBBbmxhbmcsICg3OTIxNzk="
+  const defaultCadets = [
+    "Acuna, Matias Ignacio (790941)", "Adapala, Advik (744636)", "Allabanda, Nithik Uppara (722865)",
+    "Allyn, Tyler Aiden (720946)", "Bengtson, Calan Michael (771315)", "Binoji, Amiliya Mariyah (734971)",
+    "Brogan, Samantha Rose (710771)", "Chen, Jesse (755512)", "Danve, Shrirang Abhijeet (723615)",
+    "Doshi, Raji (754508)", "Doss, Namasya (792128)", "Dunphy, Carter David (732388)",
+    "Garcia, Matthew Javier (734393)", "Groeper, Hayden Elise (791123)", "Gurunathamoorthy, Dakshin (714521)",
+    "Jesudowich, Nathan Kenneth (732627)", "Kamal, Mahek (791736)", "Kankipati, Suhaas (744637)",
+    "Karnik, Ahan Amit (706314)", "Karthik, Sai A (761259)", "Kaur, Seerat (771375)",
+    "Kulkarni, Iha Kedar (758640)", "Kulkarni, Rishita Kedar (711214)", "Kuntey, Neev Harshad (791307)",
+    "Lewis, Spencer Ross (772156)", "Lukaszczyk, Paulina Zuzanna (771802)", "Malash, Kara Elizabeth (771546)",
+    "Malinowski, Enzo (744303)", "Modi, Prasun Hemang (698702)", "Montstream, Sawyer Haiden (771396)",
+    "Moray, Evan (736140)", "Muniz, Xavier Jose (790284)", "Muthukumar, Nandha (755517)",
+    "Pal, Aniron, (720392)", "Pande, Maanit (734099)", "Prasanna, Harshitha (744634)",
+    "Putchkayala, Yashwanth (754510)", "Rahman, Muhammad zarif (792880)", "Rajasekar, Dheeraj (744638)",
+    "Raum, Niall (738850)", "Rivera, Isaias Evaristo (719365)", "Sabins, Keegan Henry (724026)",
+    "Sagar, Aadhya Prem (792176)", "Saraf, Akshit Saket (722848)", "Sawarkar, Aradhya (743453)",
+    "Shah, Mehaan Hardik (775798)", "Singh, Akshat (779732)", "Singh, Ranveer (772183)",
+    "Singh, Rishi (661050)", "Snell, Dresden (735627)", "Sohagiya, Harshiv (722861)",
+    "Sundararaman, Vanshika (772163)", "Tandon, Shriansh (733616)", "Vishwakarma, Aarav (773069)",
+    "Xia, Anlang, (792179)"
   ];
 
   function encodeBase64(str) {
@@ -238,7 +237,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   let storedCadetsRaw = JSON.parse(localStorage.getItem('rccs_cadets'));
   let initialCadets = storedCadetsRaw ? storedCadetsRaw.map(c => {
     try { return decodeBase64(c); } catch(e) { return c; }
-  }) : rawEncodedCadets.map(c => decodeBase64(c));
+  }) : defaultCadets;
 
   let cadets = initialCadets;
   let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
@@ -443,4 +442,26 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     container.innerHTML = sortedCadets.map(cadet => {
       const val = (records[cadet] && records[cadet].current && records[cadet].current[metricKey]) ? records[cadet].current[metricKey] : '';
       const safeVal = String(val).replace(/"/g, '&quot;');
-      const safeEscaped = cadet.replace(/'/g, "\\'")
+      const safeEscaped = cadet.replace(/'/g, "\\'");
+      return `
+        <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
+          <strong style="display:block; margin-bottom:6px;">${cadet}</strong>
+          <input type="number" value="${safeVal}" placeholder="Enter score" oninput="autoSaveMetric('${safeEscaped}', '${metricKey}', this.value)" style="margin-bottom:0;">
+        </div>
+      `;
+    }).join('');
+  }
+
+  function autoSaveMetric(cadet, metricKey, value) {
+    const currentDate = new Date().toLocaleDateString();
+
+    if (!records[cadet]) records[cadet] = {};
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current[metricKey] = value;
+    records[cadet].current.date = currentDate;
+
+    saveData();
+    renderHistory();
+  }
+
+  function resetMetric(met
