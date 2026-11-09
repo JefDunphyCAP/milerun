@@ -384,4 +384,96 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
       selectedCadets.forEach(cadet => {
         if (!records[cadet] || !records[cadet].current || !records[cadet].current.run) {
-          const timeEl = document.querySelector(
+          const timeEl = document.querySelector(`[data-run-time="${CSS.escape(cadet)}"]`); if (timeEl) timeEl.textContent = formatTime(elapsed); } }); }, 100); }  function stopRunner(cadet) { if (!heatStartTime) return; const elapsed = Date.now() - heatStartTime; const formatted = formatTime(elapsed); const currentDate = new Date().toLocaleDateString();  if (!records[cadet]) records[cadet] = {}; if (!records[cadet].current) records[cadet].current = {}; records[cadet].current.run = formatted; records[cadet].current.date = currentDate;  saveData(); renderHistory(); initActiveRunners();  const allFinished = selectedCadets.every(c => records[c] && records[c].current && records[c].current.run); if (allFinished) { clearInterval(heatInterval); heatStartTime = null; document.getElementById('start-heat-btn').style.background = ''; } }  function resetHeat() { clearInterval(heatInterval); heatStartTime = null; document.getElementById('master-clock').textContent = "00:00.0"; document.getElementById('start-heat-btn').style.background = '';  selectedCadets.forEach(cadet => { if (records[cadet] && records[cadet].current) { delete records[cadet].current.run; } }); saveData(); renderHistory(); initActiveRunners(); }  function initMetricInput(metricKey) { const container = document.getElementById(`${metricKey}-container`);
+    if (!container) return;
+    if (selectedCadets.length === 0) {
+      container.innerHTML = '<p class="m">No participants selected. Go to the "Roster" tab to choose cadets.</p>';
+      return;
+    }
+
+    let sortedCadets = [...selectedCadets].sort((a, b) => a.localeCompare(b));
+
+    container.innerHTML = sortedCadets.map(cadet => {
+      const val = (records[cadet] && records[cadet].current && records[cadet].current[metricKey]) ? records[cadet].current[metricKey] : '';
+      const safeVal = String(val).replace(/"/g, '&quot;');
+      const safeEscaped = cadet.replace(/'/g, "\\'");
+      return `
+        <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
+          <strong style="display:block; margin-bottom:6px;">${cadet}</strong>
+          <input type="number" value="${safeVal}" placeholder="Enter score" oninput="autoSaveMetric('${safeEscaped}', '${metricKey}', this.value)" style="margin-bottom:0;">
+        </div>
+      `;
+    }).join('');
+  }
+
+  function autoSaveMetric(cadet, metricKey, value) {
+    const currentDate = new Date().toLocaleDateString();
+
+    if (!records[cadet]) records[cadet] = {};
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current[metricKey] = value;
+    records[cadet].current.date = currentDate;
+
+    saveData();
+    renderHistory();
+  }
+
+  function resetMetric(metricKey) {
+    const eventNames = { pacer: 'Pacer', curlups: 'Curl Ups', pushups: 'Pushups', sitreach: 'Sit & Reach' };
+    if (confirm(`Are you sure you want to reset current ${eventNames[metricKey]} scores?`)) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          delete records[cadet].current[metricKey];
+        }
+      }
+      saveData();
+      renderHistory();
+      initMetricInput(metricKey);
+    }
+  }
+
+  function archiveCurrentTest() {
+    if (confirm("Archive current test results into 'Previous Test', reset active scores, and deselect all roster participants?")) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          records[cadet].previous = { ...records[cadet].current };
+          records[cadet].current = {};
+        }
+      }
+      
+      selectedCadets = [];
+      resetHeat();
+
+      saveData();
+      renderRoster();
+      renderHistory();
+      initActiveRunners();
+      
+      alert("Test day archived and roster deselected successfully!");
+    }
+  }
+
+  function renderHistory() {
+    const historyListEl = document.getElementById('history-list');
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].current || records[c].previous));
+
+    if (activeCadetsWithRecords.length === 0) {
+      historyListEl.innerHTML = '<p class="m" style="color:var(--mute);">No records recorded yet.</p>';
+    } else {
+      let sortedHistory = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
+
+      historyListEl.innerHTML = sortedHistory.map(cadet => {
+        const data = records[cadet];
+        const cur = data.current || {};
+        const prev = data.previous || {};
+        return `
+          <div class="history-card">
+            <strong>${cadet}</strong>
+            
+            <div style="margin-top:6px; font-size:0.85rem; font-weight:bold; color:var(--acc);">Current Test (${cur.date || 'No Date'})</div>
+            <div class="metric-boxes">
+              <div class="metric-box">Pacer <span>${cur.pacer || '—'}</span></div>
+              <div class="metric-box">Run <span>${cur.run || '—'}</span></div>
+              <div class="metric-box">Curl <span>${cur.curlups || '—'}</span></div>
+              <div class="metric-box">Push <span>${cur.pushups || '—'}</span></div>
+              <div
