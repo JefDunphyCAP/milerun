@@ -135,9 +135,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
   let history = JSON.parse(localStorage.getItem('rccs_history')) || [];
 
-  let heatStartTime = null;
-  let heatInterval = null;
-  let runnerTimes = {}; 
+  cadets.sort((a, b) => a.localeCompare(b));
 
   function saveData() {
     localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
@@ -184,6 +182,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const name = input.value.trim();
     if (!name) return;
     cadets.push(name);
+    cadets.sort((a, b) => a.localeCompare(b));
     input.value = '';
     saveData();
     renderRoster();
@@ -211,11 +210,11 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       return;
     }
 
-    // Sort active runners: Unfinished runners first, finished runners moved to the bottom
     let sortedRunners = [...selectedCadets].sort((a, b) => {
       let aDone = runnerTimes[a] ? 1 : 0;
       let bDone = runnerTimes[b] ? 1 : 0;
-      return aDone - bDone;
+      if (aDone !== bDone) return aDone - bDone;
+      return a.localeCompare(b);
     });
 
     container.innerHTML = sortedRunners.map(cadet => {
@@ -271,10 +270,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
     runnerTimes[cadet] = formatted;
 
-    history.unshift({ cadet, time: formatted, date: new Date().toLocaleDateString() });
+    history.push({ cadet, time: formatted, date: new Date().toLocaleDateString() });
     saveData();
     renderHistory();
-    initActiveRunners(); // Re-renders and automatically bumps finished runner to the bottom
+    initActiveRunners(); 
 
     const allFinished = selectedCadets.every(c => runnerTimes[c]);
     if (allFinished) {
@@ -299,8 +298,11 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       return;
     }
     
+    // Sort copy for export matching history display
+    let exportList = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
+
     let csvContent = "data:text/csv;charset=utf-8,Cadet,Time,Date\r\n";
-    history.forEach(h => {
+    exportList.forEach(h => {
       let safeCadet = `"${h.cadet.replace(/"/g, '""')}"`;
       csvContent += `${safeCadet},${h.time},${h.date}\r\n`;
     });
@@ -319,7 +321,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     if (history.length === 0) {
       historyListEl.innerHTML = '<li class="m" style="color:var(--mute);">No runs recorded yet.</li>';
     } else {
-      historyListEl.innerHTML = history.map(h => `
+      // Sort history alphabetically by cadet name for display
+      let sortedHistory = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
+
+      historyListEl.innerHTML = sortedHistory.map(h => `
         <li style="display:flex; justify-content:space-between; align-items:center;">
           <span><strong>${h.cadet}</strong> - <span style="color:var(--ok); font-weight:bold;">${h.time}</span></span>
           <span style="color:var(--mute); font-size:0.85rem">${h.date}</span>
