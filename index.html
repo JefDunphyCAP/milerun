@@ -3,16 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RCCS Cadet Fitness Tracker</title>
+<title>RCCS PT Testing</title>
 <link rel="icon" href="data:,">
 <style>
 :root{--bg:#f3f5f8;--card:#fff;--ink:#14213d;--mute:#5b6577;--acc:#1d4ed8;--ok:#15803d;--line:#d5dae3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1624;--card:#18223a;--ink:#e8edf7;--mute:#9aa6bd;--acc:#6b9bff;--ok:#4ade80;--line:#2b3956}}
 *{box-sizing:border-box}html{color-scheme:light dark}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:12px;max-width:640px;margin-inline:auto}
-h1{font-size:1.3rem;margin:4px 0 10px}h2{font-size:1.05rem;margin:0 0 8px}
+h1{font-size:1.3rem;margin:8px 0 12px;text-align:center;}
+h2{font-size:1.05rem;margin:0 0 8px}
 nav{display:flex;gap:4px;margin-bottom:8px;overflow-x:auto;padding-bottom:4px;}
 nav button{flex:0 0 auto;font-size:0.85rem;padding:8px 10px;}
+#nav-top{display:flex;gap:6px;margin-bottom:8px;}
+#nav-top button{flex:1;font-size:0.9rem;padding:10px;text-align:center;}
 button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 button.on,button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
@@ -61,10 +64,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
 <!-- Main App Content (Hidden until authenticated) -->
 <div id="app-content" style="display: none;">
-  <h1>RCCS Cadet Fitness Tracker</h1>
+  <h1>RCCS PT Testing</h1>
 
-  <!-- Top Row: Roster & History Tabs -->
-  <nav>
+  <!-- Top Row: Roster & History Tabs (Widened) -->
+  <nav id="nav-top">
     <button data-v="roster" class="on">Roster</button>
     <button data-v="hist">History</button>
   </nav>
@@ -579,25 +582,3 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "rccs_fitness_history.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function clearHistory() {
-    if (confirm("Are you sure you want to clear all current and previous history?")) {
-      records = {};
-      saveData();
-      renderHistory();
-      initActiveRunners();
-    }
-  }
-
-  function initializeApp() {
-    renderRoster();
-    renderHistory();
-    initActiveRunners();
-  }
-</script>
-</body>
-</html>
