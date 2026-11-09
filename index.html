@@ -11,7 +11,7 @@
 *{box-sizing:border-box}html{color-scheme:light dark}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:12px;max-width:640px;margin-inline:auto}
 h1{font-size:1.3rem;margin:4px 0 10px}h2{font-size:1.05rem;margin:0 0 8px}
-nav{display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;}
+nav{display:flex;gap:4px;margin-bottom:8px;overflow-x:auto;padding-bottom:4px;}
 nav button{flex:0 0 auto;font-size:0.85rem;padding:8px 10px;}
 button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 button.on,button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
@@ -63,10 +63,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 <div id="app-content" style="display: none;">
   <h1>RCCS Cadet Fitness Tracker</h1>
 
-  <!-- Navigation Bar -->
+  <!-- Top Row: Roster & History Tabs -->
   <nav>
     <button data-v="roster" class="on">Roster</button>
     <button data-v="hist">History</button>
+  </nav>
+
+  <!-- Second Row: Event Tabs -->
+  <nav>
     <button data-v="pacer">Pacer</button>
     <button data-v="run">Mile Run</button>
     <button data-v="curlups">Curl Ups</button>
@@ -74,7 +78,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     <button data-v="sitreach">Sit & Reach</button>
   </nav>
 
-  <!-- Pacer View (Raised right below navigation) -->
+  <!-- Pacer View -->
   <div id="view-pacer" class="view-section card">
     <h2>Pacer Tracking</h2>
     <p class="msg">Type scores for participants. Changes save automatically.</p>
