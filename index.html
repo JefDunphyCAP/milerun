@@ -18,7 +18,7 @@ button.on,button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
 .clock{font-size:2.8rem;font-weight:700;font-variant-numeric:tabular-nums;text-align:center;margin:8px 0;letter-spacing:1px;}
-input[type="text"], input[type="password"]{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
+input[type="text"]{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
 .g{display:flex;gap:8px;flex-wrap:wrap}.g>*{flex:1}
 .msg{min-height:1.4em;color:var(--mute);margin-bottom:8px}
 .view-section { display: none; }
@@ -30,138 +30,67 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 .stop-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 .time-display { font-variant-numeric: tabular-nums; font-weight: bold; font-size: 1.1rem; }
 .done-time { color: var(--ok); }
-
-/* Login Overlay Styles */
-#login-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 99999;
-}
-.login-box {
-    background: var(--card);
-    color: var(--ink);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    width: 320px;
-}
-.login-box h2 {
-    margin-top: 0;
-}
-.error-msg {
-    color: #dc2626;
-    font-size: 14px;
-    margin-top: 8px;
-    display: none;
-}
-#app-container {
-    display: none; /* Hidden until password matches */
-}
 </style>
 </head>
 <body>
+<h1>RCCS Cadet Mile Run Tracker</h1>
 
-<!-- Login Screen Overlay -->
-<div id="login-overlay">
-    <div class="login-box">
-        <h2>Site Access</h2>
-        <p style="color:var(--mute); font-size:0.9rem;">Please enter the password to continue.</p>
-        <input type="password" id="password-input" placeholder="Password">
-        <button onclick="checkPassword()" class="p" style="width:100%; margin-top:5px;">Enter</button>
-        <div id="error-msg" class="error-msg">Incorrect password. Please try again.</div>
-    </div>
+<nav>
+  <button data-v="run" class="on">Active Heat</button>
+  <button data-v="roster">Roster</button>
+  <button data-v="hist">History</button>
+</nav>
+
+<!-- Run Heat View -->
+<div id="view-run" class="view-section active card">
+  <h2>Timer</h2>
+  
+  <div id="master-clock" class="clock">00:00.0</div>
+
+  <div class="g" style="margin-bottom:16px;">
+    <button onclick="startHeat()" class="p" id="start-heat-btn">Start All Runners</button>
+    <button onclick="resetHeat()" style="background:#dc2626;color:white;border-color:#dc2626;">Reset Heat</button>
+  </div>
+
+  <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
+
+  <h3>Participants</h3>
+  <div id="active-runners-container">
+    <p class="m">No runners selected. Go to the "Roster" tab to choose cadets for this heat.</p>
+  </div>
+  <p id="run-msg" class="msg" style="margin-top:12px;"></p>
 </div>
 
-<!-- Main App Content Wrapper -->
-<div id="app-container">
-    <h1>RCCS Cadet Mile Run Tracker</h1>
+<!-- Roster View -->
+<div id="view-roster" class="view-section card">
+  <h2>Select Participants for Heat</h2>
+  <div style="margin-bottom: 12px; display:flex; gap:6px;">
+    <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
+    <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
+  </div>
 
-    <nav>
-      <button data-v="run" class="on">Active Heat</button>
-      <button data-v="roster">Roster</button>
-      <button data-v="hist">History</button>
-    </nav>
+  <div class="g" style="margin-bottom: 12px;">
+    <input type="text" id="cadet-name-input" placeholder="Add custom cadet name & ID">
+    <button onclick="addCadet()" class="p">Add</button>
+  </div>
 
-    <!-- Run Heat View -->
-    <div id="view-run" class="view-section active card">
-      <h2>Timer</h2>
-      
-      <div id="master-clock" class="clock">00:00.0</div>
+  <h3>Roster (<span id="cadet-count">0</span>)</h3>
+  <ul id="cadet-select-list"></ul>
+</div>
 
-      <div class="g" style="margin-bottom:16px;">
-        <button onclick="startHeat()" class="p" id="start-heat-btn">Start All Runners</button>
-        <button onclick="resetHeat()" style="background:#dc2626;color:white;border-color:#dc2626;">Reset Heat</button>
-      </div>
-
-      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
-
-      <h3>Participants</h3>
-      <div id="active-runners-container">
-        <p class="m">No runners selected. Go to the "Roster" tab to choose cadets for this heat.</p>
-      </div>
-      <p id="run-msg" class="msg" style="margin-top:12px;"></p>
-    </div>
-
-    <!-- Roster View -->
-    <div id="view-roster" class="view-section card">
-      <h2>Select Participants for Heat</h2>
-      <div style="margin-bottom: 12px; display:flex; gap:6px;">
-        <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
-        <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
-      </div>
-
-      <div class="g" style="margin-bottom: 12px;">
-        <input type="text" id="cadet-name-input" placeholder="Add custom cadet name & ID">
-        <button onclick="addCadet()" class="p">Add</button>
-      </div>
-
-      <h3>Roster (<span id="cadet-count">0</span>)</h3>
-      <ul id="cadet-select-list"></ul>
-    </div>
-
-    <!-- History View -->
-    <div id="view-hist" class="view-section card">
-      <h2>Run History</h2>
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button onclick="exportToCSV()" class="p" style="font-size:0.85rem; flex:1;">Download CSV for Sheets</button>
-        <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear History</button>
-      </div>
-      <ul id="history-list">
-        <li class="m" style="color:var(--mute);">No runs recorded yet.</li>
-      </ul>
-    </div>
+<!-- History View -->
+<div id="view-hist" class="view-section card">
+  <h2>Run History</h2>
+  <div style="display:flex; gap:8px; margin-bottom:12px;">
+    <button onclick="exportToCSV()" class="p" style="font-size:0.85rem; flex:1;">Download CSV for Sheets</button>
+    <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear History</button>
+  </div>
+  <ul id="history-list">
+    <li class="m" style="color:var(--mute);">No runs recorded yet.</li>
+  </ul>
 </div>
 
 <script>
-  // Password Logic
-  function checkPassword() {
-      const inputVal = document.getElementById('password-input').value;
-      const correctPassword = 'RCCSmile';
-      const errorMsg = document.getElementById('error-msg');
-
-      if (inputVal === correctPassword) {
-          document.getElementById('login-overlay').style.display = 'none';
-          document.getElementById('app-container').style.display = 'block';
-      } else {
-          errorMsg.style.display = 'block';
-          document.getElementById('password-input').value = '';
-      }
-  }
-
-  document.getElementById('password-input').addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-          checkPassword();
-      }
-  });
-
   // Tab Switching
   const buttons = document.querySelectorAll('nav button');
   const sections = document.querySelectorAll('.view-section');
@@ -236,4 +165,191 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const cadetName = checkbox.value;
     if (checkbox.checked) {
       if (!selectedCadets.includes(cadetName)) {
-        selectedCad
+        selectedCadets.push(cadetName);
+      }
+    } else {
+      selectedCadets = selectedCadets.filter(c => c !== cadetName);
+    }
+    saveData();
+  }
+
+  function selectAll(select) {
+    selectedCadets = select ? [...cadets] : [];
+    saveData();
+    renderRoster();
+  }
+
+  function addCadet() {
+    const input = document.getElementById('cadet-name-input');
+    const name = input.value.trim();
+    if (!name) return;
+    if (!cadets.includes(name)) {
+      cadets.push(name);
+      cadets.sort((a, b) => a.localeCompare(b));
+    }
+    input.value = '';
+    saveData();
+    renderRoster();
+  }
+
+  function removeCadet(cadetName) {
+    cadets = cadets.filter(c => c !== cadetName);
+    selectedCadets = selectedCadets.filter(c => c !== cadetName);
+    saveData();
+    renderRoster();
+  }
+
+  function formatTime(ms) {
+    let totalSecs = Math.floor(ms / 1000);
+    let mins = Math.floor(totalSecs / 60);
+    let secs = totalSecs % 60;
+    let tenths = Math.floor((ms % 1000) / 100);
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
+  }
+
+  let heatStartTime = null;
+  let heatInterval = null;
+  let runnerTimes = {}; 
+
+  function initActiveRunners() {
+    const container = document.getElementById('active-runners-container');
+    if (selectedCadets.length === 0) {
+      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster" tab to choose cadets.</p>';
+      return;
+    }
+
+    let sortedRunners = [...selectedCadets].sort((a, b) => {
+      let aDone = runnerTimes[a] ? 1 : 0;
+      let bDone = runnerTimes[b] ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      return a.localeCompare(b);
+    });
+
+    container.innerHTML = sortedRunners.map(cadet => {
+      const finishedTime = runnerTimes[cadet];
+      const displayTxt = finishedTime ? finishedTime : "00:00.0";
+      const isDone = finishedTime ? "done-time" : "";
+      
+      return `
+        <div class="runner-row">
+          <div>
+            <strong>${cadet}</strong><br>
+            <span class="time-display ${isDone}" id="time-${CSS.escape(cadet)}">${displayTxt}</span>
+          </div>
+          <button class="stop-btn" onclick="stopRunner('${cadet.replace(/'/g, "\\'")}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function startHeat() {
+    if (selectedCadets.length === 0) {
+      alert("Please select at least one cadet in the Roster tab first.");
+      return;
+    }
+    if (heatStartTime) return; 
+
+    heatStartTime = Date.now();
+    runnerTimes = {};
+    initActiveRunners();
+
+    document.getElementById('start-heat-btn').style.background = '#9ca3af';
+
+    heatInterval = setInterval(() => {
+      const elapsed = Date.now() - heatStartTime;
+
+      if (heatStartTime) {
+        document.getElementById('master-clock').textContent = formatTime(elapsed);
+      }
+
+      selectedCadets.forEach(cadet => {
+        if (!runnerTimes[cadet]) {
+          const timeEl = document.getElementById(`time-${CSS.escape(cadet)}`);
+          if (timeEl) timeEl.textContent = formatTime(elapsed);
+        }
+      });
+    }, 100);
+  }
+
+  function stopRunner(cadet) {
+    if (!heatStartTime) return;
+    const elapsed = Date.now() - heatStartTime;
+    const formatted = formatTime(elapsed);
+
+    runnerTimes[cadet] = formatted;
+
+    history.push({ cadet, time: formatted, date: new Date().toLocaleDateString() });
+    saveData();
+    renderHistory();
+    initActiveRunners(); 
+
+    const allFinished = selectedCadets.every(c => runnerTimes[c]);
+    if (allFinished) {
+      clearInterval(heatInterval);
+      heatStartTime = null; 
+      document.getElementById('start-heat-btn').style.background = '';
+    }
+  }
+
+  function resetHeat() {
+    clearInterval(heatInterval);
+    heatStartTime = null;
+    runnerTimes = {};
+    document.getElementById('master-clock').textContent = "00:00.0";
+    document.getElementById('start-heat-btn').style.background = '';
+    initActiveRunners();
+  }
+
+  function exportToCSV() {
+    if (history.length === 0) {
+      alert("No run history to export.");
+      return;
+    }
+    
+    let exportList = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
+
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Time,Date\r\n";
+    exportList.forEach(h => {
+      let safeCadet = `"${h.cadet.replace(/"/g, '""')}"`;
+      csvContent += `${safeCadet},${h.time},${h.date}\r\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "rccs_mile_run_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function renderHistory() {
+    const historyListEl = document.getElementById('history-list');
+    if (history.length === 0) {
+      historyListEl.innerHTML = '<li class="m" style="color:var(--mute);">No runs recorded yet.</li>';
+    } else {
+      let sortedHistory = [...history].sort((a, b) => a.cadet.localeCompare(b.cadet));
+
+      historyListEl.innerHTML = sortedHistory.map(h => `
+        <li style="display:flex; justify-content:space-between; align-items:center;">
+          <span><strong>${h.cadet}</strong> - <span style="color:var(--ok); font-weight:bold;">${h.time}</span></span>
+          <span style="color:var(--mute); font-size:0.85rem">${h.date}</span>
+        </li>
+      `).join('');
+    }
+  }
+
+  function clearHistory() {
+    if (confirm("Are you sure you want to clear all history?")) {
+      history = [];
+      saveData();
+      renderHistory();
+    }
+  }
+
+  renderRoster();
+  renderHistory();
+  initActiveRunners();
+</script>
+</body>
+</html>
