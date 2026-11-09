@@ -37,3 +37,427 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 #auth-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 16px;
+}
+</style>
+</head>
+<body>
+
+<!-- Password Overlay -->
+<div id="auth-overlay">
+  <div class="card" style="width: 100%; max-width: 360px; text-align: center;">
+    <h2>Enter Password</h2>
+    <p class="msg">Please enter the access password to continue.</p>
+    <input type="password" id="password-input" placeholder="Password" style="text-align: center;">
+    <button onclick="checkPassword()" class="p" style="width: 100%; margin-top: 4px;">Unlock</button>
+    <p id="auth-error" style="color: #dc2626; font-size: 0.85rem; margin-top: 8px; min-height: 1.2em;"></p>
+  </div>
+</div>
+
+<!-- Main App Content (Hidden until authenticated) -->
+<div id="app-content" style="display: none;">
+  <h1>RCCS Cadet Fitness Tracker</h1>
+
+  <nav>
+    <button data-v="roster" class="on">Roster</button>
+    <button data-v="run">Mile Run</button>
+    <button data-v="curlups">Curl Ups</button>
+    <button data-v="pushups">Pushups</button>
+    <button data-v="sitreach">Sit & Reach</button>
+    <button data-v="hist">History</button>
+  </nav>
+
+  <!-- Roster View -->
+  <div id="view-roster" class="view-section active card">
+    <h2>Select Participants for Heat</h2>
+    <div style="margin-bottom: 12px; display:flex; gap:6px;">
+      <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
+      <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
+    </div>
+
+    <div class="g" style="margin-bottom: 12px;">
+      <input type="text" id="cadet-name-input" placeholder="Last, First (CAP ID)">
+      <button onclick="addCadet()" class="p">Add</button>
+    </div>
+
+    <h3>Roster (<span id="cadet-count">0</span>)</h3>
+    <ul id="cadet-select-list"></ul>
+  </div>
+
+  <!-- Mile Run View -->
+  <div id="view-run" class="view-section card">
+    <h2>Mile Run Timer</h2>
+    
+    <div id="master-clock" class="clock">00:00.0</div>
+
+    <div class="g" style="margin-bottom:16px;">
+      <button onclick="startHeat()" class="p" id="start-heat-btn">Start All Runners</button>
+      <button onclick="resetHeat()" style="background:#dc2626;color:white;border-color:#dc2626;">Reset Heat</button>
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
+
+    <h3>Participants</h3>
+    <div id="active-runners-container">
+      <p class="m">No runners selected. Go to the "Roster" tab to choose cadets for this heat.</p>
+    </div>
+    <p id="run-msg" class="msg" style="margin-top:12px;"></p>
+  </div>
+
+  <!-- Curl Ups View -->
+  <div id="view-curlups" class="view-section card">
+    <h2>Curl Ups Tracking</h2>
+    <p class="msg">Type scores for participants. Changes save automatically.</p>
+    <div style="margin-bottom: 12px;">
+      <button onclick="resetMetric('curlups')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Curl Ups Scores</button>
+    </div>
+    <div id="curlups-container">
+      <p class="m">No participants selected.</p>
+    </div>
+  </div>
+
+  <!-- Pushups View -->
+  <div id="view-pushups" class="view-section card">
+    <h2>Pushups Tracking</h2>
+    <p class="msg">Type scores for participants. Changes save automatically.</p>
+    <div style="margin-bottom: 12px;">
+      <button onclick="resetMetric('pushups')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Pushups Scores</button>
+    </div>
+    <div id="pushups-container">
+      <p class="m">No participants selected.</p>
+    </div>
+  </div>
+
+  <!-- Sit and Reach View -->
+  <div id="view-sitreach" class="view-section card">
+    <h2>Sit and Reach Tracking</h2>
+    <p class="msg">Type scores for participants. Changes save automatically.</p>
+    <div style="margin-bottom: 12px;">
+      <button onclick="resetMetric('sitreach')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Sit & Reach Scores</button>
+    </div>
+    <div id="sitreach-container">
+      <p class="m">No participants selected.</p>
+    </div>
+  </div>
+
+  <!-- History View -->
+  <div id="view-hist" class="view-section card">
+    <h2>Fitness History (Last 2 Tests)</h2>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button onclick="archiveCurrentTest()" class="p" style="font-size:0.85rem; flex:1; background:var(--ok); border-color:var(--ok);">Archive/Roll Over Test Day</button>
+      <button onclick="exportToCSV()" class="p" style="font-size:0.85rem;">Download CSV</button>
+      <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear All</button>
+    </div>
+    <p class="msg">Clicking archive rolls current scores to previous test, clears current fields, and deselects all roster participants.</p>
+    <div id="history-list">
+      <p class="m" style="color:var(--mute);">No records recorded yet.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function checkPassword() {
+    const inputVal = document.getElementById('password-input').value;
+    if (inputVal === "RCCSmile") {
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      initializeApp();
+    } else {
+      document.getElementById('auth-error').textContent = 'Incorrect password. Please try again.';
+      document.getElementById('password-input').value = '';
+      document.getElementById('password-input').focus();
+    }
+  }
+
+  document.getElementById('password-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      checkPassword();
+    }
+  });
+
+  const buttons = document.querySelectorAll('nav button');
+  const sections = document.querySelectorAll('.view-section');
+
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      buttons.forEach(btn => btn.classList.remove('on'));
+      button.classList.add('on');
+      const targetView = button.getAttribute('data-v');
+      sections.forEach(section => {
+        section.classList.toggle('active', section.id === 'view-' + targetView);
+      });
+      if(targetView === 'run') {
+        initActiveRunners();
+      } else if(targetView === 'curlups') {
+        initMetricInput('curlups');
+      } else if(targetView === 'pushups') {
+        initMetricInput('pushups');
+      } else if(targetView === 'sitreach') {
+        initMetricInput('sitreach');
+      }
+    });
+  });
+
+  const defaultCadets = [
+    "Acuna, Matias Ignacio (790941)", "Adapala, Advik (744636)", "Allabanda, Nithik Uppara (722865)",
+    "Allyn, Tyler Aiden (720946)", "Bengtson, Calan Michael (771315)", "Binoji, Amiliya Mariyah (734971)",
+    "Brogan, Samantha Rose (710771)", "Chen, Jesse (755512)", "Danve, Shrirang Abhijeet (723615)",
+    "Doshi, Raji (754508)", "Doss, Namasya (792128)", "Dunphy, Carter David (732388)",
+    "Garcia, Matthew Javier (734393)", "Groeper, Hayden Elise (791123)", "Gurunathamoorthy, Dakshin (714521)",
+    "Jesudowich, Nathan Kenneth (732627)", "Kamal, Mahek (791736)", "Kankipati, Suhaas (744637)",
+    "Karnik, Ahan Amit (706314)", "Karthik, Sai A (761259)", "Kaur, Seerat (771375)",
+    "Kulkarni, Iha Kedar (758640)", "Kulkarni, Rishita Kedar (711214)", "Kuntey, Neev Harshad (791307)",
+    "Lewis, Spencer Ross (772156)", "Lukaszczyk, Paulina Zuzanna (771802)", "Malash, Kara Elizabeth (771546)",
+    "Malinowski, Enzo (744303)", "Modi, Prasun Hemang (698702)", "Montstream, Sawyer Haiden (771396)",
+    "Moray, Evan (736140)", "Muniz, Xavier Jose (790284)", "Muthukumar, Nandha (755517)",
+    "Pal, Aniron, (720392)", "Pande, Maanit (734099)", "Prasanna, Harshitha (744634)",
+    "Putchkayala, Yashwanth (754510)", "Rahman, Muhammad zarif (792880)", "Rajasekar, Dheeraj (744638)",
+    "Raum, Niall (738850)", "Rivera, Isaias Evaristo (719365)", "Sabins, Keegan Henry (724026)",
+    "Sagar, Aadhya Prem (792176)", "Saraf, Akshit Saket (722848)", "Sawarkar, Aradhya (743453)",
+    "Shah, Mehaan Hardik (775798)", "Singh, Akshat (779732)", "Singh, Ranveer (772183)",
+    "Singh, Rishi (661050)", "Snell, Dresden (735627)", "Sohagiya, Harshiv (722861)",
+    "Sundararaman, Vanshika (772163)", "Tandon, Shriansh (733616)", "Vishwakarma, Aarav (773069)",
+    "Xia, Anlang, (792179)"
+  ];
+
+  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || defaultCadets;
+  let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
+  let records = JSON.parse(localStorage.getItem('rccs_records')) || {}; 
+
+  cadets.sort((a, b) => a.localeCompare(b));
+
+  function saveData() {
+    localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
+    localStorage.setItem('rccs_selected', JSON.stringify(selectedCadets));
+    localStorage.setItem('rccs_records', JSON.stringify(records));
+  }
+
+  function renderRoster() {
+    document.getElementById('cadet-count').textContent = cadets.length;
+    const listEl = document.getElementById('cadet-select-list');
+    
+    listEl.innerHTML = cadets.map((c) => {
+      const isChecked = selectedCadets.includes(c) ? 'checked' : '';
+      const safeVal = c.replace(/"/g, '&quot;');
+      const safeEscaped = c.replace(/'/g, "\\'");
+      return `
+        <li>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
+            <input type="checkbox" value="${safeVal}" ${isChecked} onchange="toggleSelect(this)" style="width:18px; height:18px;">
+            <span style="font-size:0.95rem">${c}</span>
+          </label>
+          <button onclick="confirmRemoveCadet('${safeEscaped}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
+        </li>
+      `;
+    }).join('');
+  }
+
+  function toggleSelect(checkbox) {
+    const cadetName = checkbox.value;
+    if (checkbox.checked) {
+      if (!selectedCadets.includes(cadetName)) {
+        selectedCadets.push(cadetName);
+      }
+    } else {
+      selectedCadets = selectedCadets.filter(c => c !== cadetName);
+    }
+    saveData();
+  }
+
+  function selectAll(select) {
+    selectedCadets = select ? [...cadets] : [];
+    saveData();
+    renderRoster();
+  }
+
+  function addCadet() {
+    const input = document.getElementById('cadet-name-input');
+    const name = input.value.trim();
+    if (!name) return;
+    if (!cadets.includes(name)) {
+      cadets.push(name);
+      cadets.sort((a, b) => a.localeCompare(b));
+    }
+    input.value = '';
+    saveData();
+    renderRoster();
+  }
+
+  function confirmRemoveCadet(cadetName) {
+    if (confirm(`Are you sure you want to delete "${cadetName}" from the roster?`)) {
+      removeCadet(cadetName);
+    }
+  }
+
+  function removeCadet(cadetName) {
+    cadets = cadets.filter(c => c !== cadetName);
+    selectedCadets = selectedCadets.filter(c => c !== cadetName);
+    if (records[cadetName]) {
+      delete records[cadetName];
+    }
+    saveData();
+    renderRoster();
+    renderHistory();
+  }
+
+  function formatTime(ms) {
+    let totalSecs = Math.floor(ms / 1000);
+    let mins = Math.floor(totalSecs / 60);
+    let secs = totalSecs % 60;
+    let tenths = Math.floor((ms % 1000) / 100);
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
+  }
+
+  let heatStartTime = null;
+  let heatInterval = null;
+
+  function initActiveRunners() {
+    const container = document.getElementById('active-runners-container');
+    if (selectedCadets.length === 0) {
+      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster" tab to choose cadets.</p>';
+      return;
+    }
+
+    let sortedRunners = [...selectedCadets].sort((a, b) => {
+      let aDone = (records[a] && records[a].current && records[a].current.run) ? 1 : 0;
+      let bDone = (records[b] && records[b].current && records[b].current.run) ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      return a.localeCompare(b);
+    });
+
+    container.innerHTML = sortedRunners.map(cadet => {
+      const finishedTime = (records[cadet] && records[cadet].current && records[cadet].current.run) ? records[cadet].current.run : null;
+      const displayTxt = finishedTime ? finishedTime : "00:00.0";
+      const isDone = finishedTime ? "done-time" : "";
+      const safeEscaped = cadet.replace(/'/g, "\\'");
+      
+      return `
+        <div class="runner-row">
+          <div>
+            <strong>${cadet}</strong><br>
+            <span class="time-display ${isDone}" data-run-time="${cadet}">${displayTxt}</span>
+          </div>
+          <button class="stop-btn" onclick="stopRunner('${safeEscaped}')" ${heatStartTime && !finishedTime ? '' : 'disabled'}>Stop</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function startHeat() {
+    if (selectedCadets.length === 0) {
+      alert("Please select at least one cadet in the Roster tab first.");
+      return;
+    }
+    if (heatStartTime) return; 
+
+    heatStartTime = Date.now();
+    initActiveRunners();
+
+    document.getElementById('start-heat-btn').style.background = '#9ca3af';
+
+    heatInterval = setInterval(() => {
+      const elapsed = Date.now() - heatStartTime;
+
+      if (heatStartTime) {
+        document.getElementById('master-clock').textContent = formatTime(elapsed);
+      }
+
+      selectedCadets.forEach(cadet => {
+        if (!records[cadet] || !records[cadet].current || !records[cadet].current.run) {
+          const timeEl = document.querySelector(`[data-run-time="${CSS.escape(cadet)}"]`);
+          if (timeEl) timeEl.textContent = formatTime(elapsed);
+        }
+      });
+    }, 100);
+  }
+
+  function stopRunner(cadet) {
+    if (!heatStartTime) return;
+    const elapsed = Date.now() - heatStartTime;
+    const formatted = formatTime(elapsed);
+    const currentDate = new Date().toLocaleDateString();
+
+    if (!records[cadet]) records[cadet] = {};
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current.run = formatted;
+    records[cadet].current.date = currentDate;
+
+    saveData();
+    renderHistory();
+    initActiveRunners(); 
+
+    const allFinished = selectedCadets.every(c => records[c] && records[c].current && records[c].current.run);
+    if (allFinished) {
+      clearInterval(heatInterval);
+      heatStartTime = null; 
+      document.getElementById('start-heat-btn').style.background = '';
+    }
+  }
+
+  function resetHeat() {
+    clearInterval(heatInterval);
+    heatStartTime = null;
+    document.getElementById('master-clock').textContent = "00:00.0";
+    document.getElementById('start-heat-btn').style.background = '';
+    
+    selectedCadets.forEach(cadet => {
+      if (records[cadet] && records[cadet].current) {
+        delete records[cadet].current.run;
+      }
+    });
+    saveData();
+    renderHistory();
+    initActiveRunners();
+  }
+
+  function initMetricInput(metricKey) {
+    const container = document.getElementById(`${metricKey}-container`);
+    if (selectedCadets.length === 0) {
+      container.innerHTML = '<p class="m">No participants selected. Go to the "Roster" tab to choose cadets.</p>';
+      return;
+    }
+
+    let sortedCadets = [...selectedCadets].sort((a, b) => a.localeCompare(b));
+
+    container.innerHTML = sortedCadets.map(cadet => {
+      const val = (records[cadet] && records[cadet].current && records[cadet].current[metricKey]) ? records[cadet].current[metricKey] : '';
+      const safeVal = String(val).replace(/"/g, '&quot;');
+      const safeEscaped = cadet.replace(/'/g, "\\'");
+      return `
+        <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
+          <strong style="display:block; margin-bottom:6px;">${cadet}</strong>
+          <input type="number" value="${safeVal}" placeholder="Enter score" oninput="autoSaveMetric('${safeEscaped}', '${metricKey}', this.value)" style="margin-bottom:0;">
+        </div>
+      `;
+    }).join('');
+  }
+
+  function autoSaveMetric(cadet, metricKey, value) {
+    const currentDate = new Date().toLocaleDateString();
+
+    if (!records[cadet]) records[cadet] = {};
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current[metricKey] = value;
+    records[cadet].current.date = currentDate;
+
+    saveData();
+    renderHistory();
+  }
+
+  function resetMetric(metricKey) {
+    const eventNames = { curlups: 'Curl Ups', pushups: 'Pushups', sitreach: 'Sit & Reach' };
+    if (confirm(`Are you sure you want to reset current ${eventNames[metricKey]} scores?`)) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          delete records[cadet].current[metricKey];
+        }
+      }
+      saveData();
+      renderHistory();
+      initMetricInput(metricKey);
+    
