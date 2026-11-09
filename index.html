@@ -81,7 +81,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     </div>
 
     <div class="g" style="margin-bottom: 12px;">
-      <input type="text" id="cadet-name-input" placeholder="Add custom cadet name & ID">
+      <input type="text" id="cadet-name-input" placeholder="Last, First (CAP ID)">
       <button onclick="addCadet()" class="p">Add</button>
     </div>
 
@@ -249,7 +249,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
             <input type="checkbox" value="${safeVal}" ${isChecked} onchange="toggleSelect(this)" style="width:18px; height:18px;">
             <span style="font-size:0.95rem">${c}</span>
           </label>
-          <button onclick="removeCadet('${safeEscaped}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
+          <button onclick="confirmRemoveCadet('${safeEscaped}')" style="background:#dc2626; color:white; border:none; padding:4px 8px; font-size:0.75rem; border-radius:4px; cursor:pointer;">Del</button>
         </li>
       `;
     }).join('');
@@ -286,11 +286,21 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     renderRoster();
   }
 
+  function confirmRemoveCadet(cadetName) {
+    if (confirm(`Are you sure you want to delete "${cadetName}" from the roster?`)) {
+      removeCadet(cadetName);
+    }
+  }
+
   function removeCadet(cadetName) {
     cadets = cadets.filter(c => c !== cadetName);
     selectedCadets = selectedCadets.filter(c => c !== cadetName);
+    if (records[cadetName]) {
+      delete records[cadetName];
+    }
     saveData();
     renderRoster();
+    renderHistory();
   }
 
   function formatTime(ms) {
@@ -406,7 +416,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     container.innerHTML = sortedCadets.map(cadet => {
       const val = (records[cadet] && records[cadet][metricKey]) ? records[cadet][metricKey] : '';
       const safeVal = String(val).replace(/"/g, '&quot;');
-      const safeCadetAttr = cadet.replace(/"/g, '&quot;');
       const safeEscaped = cadet.replace(/'/g, "\\'");
       return `
         <div style="padding: 10px 0; border-bottom: 1px solid var(--line);">
