@@ -215,35 +215,11 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     });
   });
 
-  // Base64 Encoded default cadets array to obscure names in source code
-  const encodedDefaultCadets = [
-    "QWN1bmEsIE1hdGlhcyBJZ25hY2lvICg3OTA5NDEp",
-    "QWRhcGFsYSwgQWR2aWsgKDc0NDYzNik=",
-    "QWxsYWJhbmRhLCBOaXRoaWsgVXBwYXJhICg3MjI4NjUp",
-    "QWxseW4sIFR5bGVyIEFpZGVuICg3MjA5NDYp",
-    "QmVuZ3Rzb24sIENhbGFuIE1pY2hhZWwgKDc3MTMxNSk=",
-    "Qmlub2ppLCBBbWlsaXlhIE1hcml5YWggKDczNDk3MSk=",
-    "QnJvZ2FuLCBTYW1hbnRoYSBSb3NlICg3MTA3NzEp",
-    "Q2hlbiwgSmVzc2UgKDc1NTUxMik=",
-    "RGFudmUsIFNocmlyYW5nIEFiaGijZWV0ICg3MjM2MTUp".replace('j', 'j'), // fixed unicode safety
-    "RG9zaGksIFJhamkgKDc1NDUwOCk=",
-    "RG9zcywgTmFtYXN5YSAoNzkyMTI4KQ==",
-    "RHVucGh5LCBDYXJ0ZXIgRGF2aWQgKDczMjM4OCk=",
-    "R2FyY2lhLCBNYXR0aGV3IEphdmllciAoNzM0MzkzKQ==",
-    "R3JvZXBlciwgSGF5ZGVuIEVsaXNlICg3OTExMjMp",
-    "R3VydW5hdGhhbW9vcnRoeSwgRGFrc2hpbiAoNzE0NTIxKQ==",
-    "SmVzdWRvd2ljaCwgTmF0aGFuIEtlbm5ldGggKDczMjYyNyk=",
-    "S2FtYWwsIE1haGVrICg3OTE3MzYp",
-    "S2Fua2lwYXRpLCBTdWhhYXMgKDc0NDYzNyk=",
-    "S2FybmlrLCBBaGFuIEFtaXQgKDA2MzE0KQ==".replace('K', 'S'), // encoded safely below
-    "S2FybmlrLCBBaGFuIEFtaXQgNzA2MzE0".replace('N', ')').replace('K', '(').replace('S', 'K'), // clean base64 format below:
-  ];
-
-  // Clean, fully decoded Base64 array loader for cadets
+  // Base64 Encoded default cadets array
   const rawEncodedCadets = [
     "QWN1bmEsIE1hdGlhcyBJZ25hY2lvICg3OTA5NDEp", "QWRhcGFsYSwgQWR2aWsgKDc0NDYzNik=", "QWxsYWJhbmRhLCBOaXRoaWsgVXBwYXJhICg3MjI4NjUp",
     "QWxseW4sIFR5bGVyIEFpZGVuICg3MjA5NDYp", "QmVuZ3Rzb24sIENhbGFuIE1pY2hhZWwgKDc3MTMxNSk=", "Qmlub2ppLCBBbWlsaXlhIE1hcml5YWggKDczNDk3MSk=",
-    "QnJvZ2FuLCBTYW1hbnRoYSBSb3NlICg3MTA3NzEp", "Q2hlbiwgSmVzc2UgKDc1NTUxMik=", "RGFudmUsIFNocmlyYW5nIEFiaGhqZWV0ICg3MjM2MTUp".replace('hhj','rag A'),
+    "QnJvZ2ansyBTYW1hbnRoYSBSb3NlICg3MTA3NzEp".replace('jsy', 'Cw'), "Q2hlbiwgSmVzc2UgKDc1NTUxMik=", "RGFudmUsIFNocmlyYW5nIEFiaGhqZWV0ICg3MjM2MTUp".replace('hhj','rag A'),
     "RG9zaGksIFJhamkgKDc1NDUwOCk=", "RG9zcywgTmFtYXN5YSAoNzkyMTI4KQ==", "RHVucGh5LCBDYXJ0ZXIgRGF2aWQgKDczMjM4OCk=",
     "R2FyY2lhLCBNYXR0aGV3IEphdmllciAoNzM0MzkzKQ==", "R3JvZXBlciwgSGF5ZGVuIEVsaXNlICg3OTExMjMp", "R3VydW5hdGhhbW9vcnRoeSwgRGFrc2hpbiAoNzE0NTIxKQ==",
     "SmVzdWRvd2ljaCwgTmF0aGFuIEtlbm5ldGggKDczMjYyNyk=", "S2FtYWwsIE1haGVrICg3OTE3MzYp", "S2Fua2lwYXRpLCBTdWhhYXMgKDc0NDYzNyk=",
@@ -256,22 +232,37 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     "UHV0Y2hrYXlhbGEsIFlhc2h3YW50aCAoNzU0NTEwKQ==", "UmFobWFuLCBNdWhhbW1hZCB6YXJpZiAoNzkyODgwKQ==", "UmFqYXNla2FyLCBEaGVlcmFqICg3NDQ2Mzgp",
     "UmF1bSwgTmlhbGwgKDczODg1MCk=", "Uml2ZXJhLCBJc2FpYXMgRXZhcmlzdG8gKDcxOTM2NSk=", "U2FiaW5zLCBLZWVnYW4gSGVucnkgKDcyNDAyNik=",
     "U2FnYXIsIEFhZGh5YSBQcmVtICg3OTIxNzYp", "U2FyYWYsIEFrc2hpdCBTYWtldCAoNzIyODQ4KQ==", "U2F3YXJrYXIsIEFyYWRoeWEgKDc0MzQ1Myk=",
-    "U2hhaCwgTWVoYWFuIEhhcmRpayAoNzc1Nzk4KQ==", "U2luZ2gsIEFrc2hhdCAoNzc5NzMyKQ==", "U2luZ2gsIFJhbnZlZXIgKDc3MjE4Myk=",
+    "U2hhaCwgTWVoYWFuIEhhcmRikjAoNzc1Nzk4KQ==".replace('j0','h'), "U2luZ2gsIEFrc2hhdCAoNzc5NzMyKQ==", "U2luZ2gsIFJhbnZlZXIgKDc3MjE4Myk=",
     "U2luZ2gsIFJpc2hpICg2NjEwNTAp", "U25lbGwsIERyZXNkZW4gKDczNTYyNyk=", "U29oYWdpeWEsIEhhcnNoaXYgKDIyODYxKQ==".replace('2', '7'),
     "U3VuZGFyYXJhbWFuLCBWYW5zaGlrYSAoNzcyMTYzKQ==", "VGFuZG9uLCBTaHJpYW5zaCAoNzMzNjE2KQ==", "VmlzaHdha2FybWEsIEFhcmF2ICg3NzMwNjkp",
     "WGlhLCBBbmxhbmcsICg3OTIxNzk="
   ];
 
-  const defaultCadets = rawEncodedCadets.map(encoded => decodeURIComponent(escape(atob(encoded))));
+  // Helper functions for safe Base64 encoding/decoding of unicode text
+  function encodeBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
 
-  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || defaultCadets;
+  function decodeBase64(str) {
+    return decodeURIComponent(escape(atob(str)));
+  }
+
+  // Load and decode stored cadets (supporting both legacy plain text and new encoded strings)
+  let storedCadetsRaw = JSON.parse(localStorage.getItem('rccs_cadets'));
+  let initialCadets = storedCadetsRaw ? storedCadetsRaw.map(c => {
+    try { return decodeBase64(c); } catch(e) { return c; } // falls back if unencoded
+  }) : rawEncodedCadets.map(c => decodeBase64(c));
+
+  let cadets = initialCadets;
   let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
   let records = JSON.parse(localStorage.getItem('rccs_records')) || {}; 
 
   cadets.sort((a, b) => a.localeCompare(b));
 
   function saveData() {
-    localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
+    // Automatically encode all cadet names to Base64 before saving to localStorage
+    const encodedCadetsForStorage = cadets.map(c => encodeBase64(c));
+    localStorage.setItem('rccs_cadets', JSON.stringify(encodedCadetsForStorage));
     localStorage.setItem('rccs_selected', JSON.stringify(selectedCadets));
     localStorage.setItem('rccs_records', JSON.stringify(records));
   }
