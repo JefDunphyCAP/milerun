@@ -13,77 +13,171 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,
 h1{font-size:1.3rem;margin:4px 0 10px}h2{font-size:1.05rem;margin:0 0 8px}
 nav{display:flex;gap:6px;margin-bottom:12px}
 nav button{flex:1}
-button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 button.on,button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
-.clock{font-size:3rem;font-weight:700;font-variant-numeric:tabular-nums;text-align:center}
-.row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)}
-.row:first-of-type{border-top:0}.m{color:var(--mute);font-size:.9rem}.t{font-variant-numeric:tabular-nums;font-weight:600}.done .t{color:var(--ok)}
-input{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+input,select{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
 .g{display:flex;gap:8px;flex-wrap:wrap}.g>*{flex:1}
-.big{padding:14px 18px;min-width:96px}.big:active{transform:scale(.97)}.msg{min-height:1.4em;color:var(--mute)}.tbl{overflow-x:auto}
+.msg{min-height:1.4em;color:var(--mute);margin-bottom:8px}
 .view-section { display: none; }
 .view-section.active { display: block; }
+ul { padding-left: 20px; margin: 8px 0; }
+li { margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.del-btn { background: #dc2626; color: white; border: none; padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; }
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 </head>
 <body>
-<h1>RCCS Cadet Mile Run Tracker <button id="so" onclick="logout()" style="float:right;font-size:.8rem;padding:6px 10px" hidden>Sign out</button></h1>
+<h1>RCCS Cadet Mile Run Tracker</h1>
 
 <nav>
   <button data-v="run" class="on">Run</button>
   <button data-v="roster">Roster</button>
   <button data-v="hist">History</button>
 </nav>
-<div id="msg" class="msg" role="status"></div>
 
-<!-- View Sections -->
+<!-- Run View -->
 <div id="view-run" class="view-section active card">
-  <h2>Run View</h2>
-  <p>Track your active mile run timers and times here.</p>
+  <h2>Record Cadet Run</h2>
+  <label for="run-cadet-select">Select Cadet:</label>
+  <select id="run-cadet-select">
+    <option value="">-- Add cadets in Roster first --</option>
+  </select>
+  
+  <label for="run-time-input">Time (MM:SS):</label>
+  <input type="text" id="run-time-input" placeholder="e.g. 07:45">
+  
+  <button onclick="saveRun()" class="p" style="width:100%">Save Run Time</button>
+  <p id="run-msg" class="msg" style="margin-top:8px;"></p>
 </div>
 
+<!-- Roster View -->
 <div id="view-roster" class="view-section card">
-  <h2>Roster View</h2>
-  <p>Manage cadet names and groups here.</p>
+  <h2>Manage Roster</h2>
+  <div class="g">
+    <input type="text" id="cadet-name-input" placeholder="Cadet Full Name">
+    <button onclick="addCadet()" class="p">Add Cadet</button>
+  </div>
+  <h3>Roster List</h3>
+  <ul id="cadet-list">
+    <li class="m" style="color:var(--mute);">No cadets added yet.</li>
+  </ul>
 </div>
 
+<!-- History View -->
 <div id="view-hist" class="view-section card">
-  <h2>History View</h2>
-  <p>Review past run logs and results here.</p>
+  <h2>Run History</h2>
+  <ul id="history-list">
+    <li class="m" style="color:var(--mute);">No runs recorded yet.</li>
+  </ul>
 </div>
 
 <script>
-  // Tab switching script
+  // Tab Switching
   const buttons = document.querySelectorAll('nav button');
   const sections = document.querySelectorAll('.view-section');
 
   buttons.forEach(button => {
     button.addEventListener('click', () => {
-      // Highlight active button
       buttons.forEach(btn => btn.classList.remove('on'));
       button.classList.add('on');
-      
-      // Get target view key
       const targetView = button.getAttribute('data-v');
-      
-      // Show matching section, hide others
       sections.forEach(section => {
-        if (section.id === 'view-' + targetView) {
-          section.classList.add('active');
-        } else {
-          section.classList.remove('active');
-        }
+        section.classList.toggle('active', section.id === 'view-' + targetView);
       });
     });
   });
 
-  function logout() {
-    // Add your sign out logic here
+  // App Data State (stored in browser localStorage so it saves on your phone)
+  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || [];
+  let history = JSON.parse(localStorage.getItem('rccs_history')) || [];
+
+  function saveData() {
+    localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
+    localStorage.setItem('rccs_history', JSON.stringify(history));
   }
+
+  // Roster Management
+  function addCadet() {
+    const input = document.getElementById('cadet-name-input');
+    const name = input.value.trim();
+    if (!name) return;
+
+    cadets.push(name);
+    input.value = '';
+    saveData();
+    renderAll();
+  }
+
+  function removeCadet(index) {
+    cadets.splice(index, 1);
+    saveData();
+    renderAll();
+  }
+
+  // Run Logging
+  function saveRun() {
+    const select = document.getElementById('run-cadet-select');
+    const timeInput = document.getElementById('run-time-input');
+    const msg = document.getElementById('run-msg');
+    
+    const cadet = select.value;
+    const time = timeInput.value.trim();
+
+    if (!cadet) {
+      msg.textContent = "Please select a cadet.";
+      return;
+    }
+    if (!time) {
+      msg.textContent = "Please enter a run time.";
+      return;
+    }
+
+    history.unshift({ cadet, time, date: new Date().toLocaleDateString() });
+    timeInput.value = '';
+    msg.textContent = `Saved run for ${cadet}!`;
+    saveData();
+    renderAll();
+
+    setTimeout(() => { msg.textContent = ""; }, 3000);
+  }
+
+  // Render All UI Elements
+  function renderAll() {
+    // Render Roster List
+    const cadetListEl = document.getElementById('cadet-list');
+    if (cadets.length === 0) {
+      cadetListEl.innerHTML = '<li style="color:var(--mute);">No cadets added yet.</li>';
+    } else {
+      cadetListEl.innerHTML = cadets.map((c, i) => `
+        <span>${c}</span>
+        <button class="del-btn" onclick="removeCadet(${i})">Delete</button>
+      `).join('');
+    }
+
+    // Render Dropdown Select
+    const selectEl = document.getElementById('run-cadet-select');
+    if (cadets.length === 0) {
+      selectEl.innerHTML = '<option value="">-- Add cadets in Roster first --</option>';
+    } else {
+      selectEl.innerHTML = '<option value="">-- Select Cadet --</option>' + 
+        cadets.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    // Render History List
+    const historyListEl = document.getElementById('history-list');
+    if (history.length === 0) {
+      historyListEl.innerHTML = '<li style="color:var(--mute);">No runs recorded yet.</li>';
+    } else {
+      historyListEl.innerHTML = history.map(h => `
+        <span><strong>${h.cadet}</strong> - ${h.time}</span>
+        <span style="color:var(--mute);font-size:0.85rem">${h.date}</span>
+      `).join('');
+    }
+  }
+
+  // Initial load render
+  renderAll();
 </script>
 </body>
 </html>
