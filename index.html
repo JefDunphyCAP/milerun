@@ -30,7 +30,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 .stop-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 .time-display { font-variant-numeric: tabular-nums; font-weight: bold; font-size: 1.1rem; }
 .done-time { color: var(--ok); }
-.history-card { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+.history-card { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
 .metric-boxes { display: flex; gap: 6px; margin-top: 6px; }
 .metric-box { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 6px; text-align: center; font-size: 0.8rem; }
 .metric-box span { display: block; font-weight: bold; font-size: 0.95rem; color: var(--ok); margin-top: 2px; }
@@ -147,11 +147,13 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   <!-- History View -->
   <div id="view-hist" class="view-section card">
-    <h2>Fitness History</h2>
+    <h2>Fitness History (Last 2 Tests)</h2>
     <div style="display:flex; gap:8px; margin-bottom:12px;">
-      <button onclick="exportToCSV()" class="p" style="font-size:0.85rem; flex:1;">Download CSV for Sheets</button>
-      <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear History</button>
+      <button onclick="archiveCurrentTest()" class="p" style="font-size:0.85rem; flex:1; background:var(--ok); border-color:var(--ok);">Archive/Roll Over Test Day</button>
+      <button onclick="exportToCSV()" class="p" style="font-size:0.85rem;">Download CSV</button>
+      <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear All</button>
     </div>
+    <p class="msg">Clicking "Archive/Roll Over Test Day" moves current active scores to "Previous Test" and clears active fields for a new test session.</p>
     <div id="history-list">
       <p class="m" style="color:var(--mute);">No records recorded yet.</p>
     </div>
@@ -322,14 +324,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
 
     let sortedRunners = [...selectedCadets].sort((a, b) => {
-      let aDone = (records[a] && records[a].run) ? 1 : 0;
-      let bDone = (records[b] && records[b].run) ? 1 : 0;
+      let aDone = (records[a] && records[a].current && records[a].current.run) ? 1 : 0;
+      let bDone = (records[b] && records[b].current && records[b].current.run) ? 1 : 0;
       if (aDone !== bDone) return aDone - bDone;
       return a.localeCompare(b);
     });
 
     container.innerHTML = sortedRunners.map(cadet => {
-      const finishedTime = (records[cadet] && records[cadet].run) ? records[cadet].run : null;
+      const finishedTime = (records[cadet] && records[cadet].current && records[cadet].current.run) ? records[cadet].current.run : null;
       const displayTxt = finishedTime ? finishedTime : "00:00.0";
       const isDone = finishedTime ? "done-time" : "";
       const safeEscaped = cadet.replace(/'/g, "\\'");
@@ -366,7 +368,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       }
 
       selectedCadets.forEach(cadet => {
-        if (!records[cadet] || !records[cadet].run) {
+        if (!records[cadet] || !records[cadet].current || !records[cadet].current.run) {
           const timeEl = document.querySelector(`[data-run-time="${CSS.escape(cadet)}"]`);
           if (timeEl) timeEl.textContent = formatTime(elapsed);
         }
@@ -381,14 +383,15 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const currentDate = new Date().toLocaleDateString();
 
     if (!records[cadet]) records[cadet] = {};
-    records[cadet].run = formatted;
-    records[cadet].date = currentDate;
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current.run = formatted;
+    records[cadet].current.date = currentDate;
 
     saveData();
     renderHistory();
     initActiveRunners(); 
 
-    const allFinished = selectedCadets.every(c => records[c] && records[c].run);
+    const allFinished = selectedCadets.every(c => records[c] && records[c].current && records[c].current.run);
     if (allFinished) {
       clearInterval(heatInterval);
       heatStartTime = null; 
@@ -414,7 +417,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     let sortedCadets = [...selectedCadets].sort((a, b) => a.localeCompare(b));
 
     container.innerHTML = sortedCadets.map(cadet => {
-      const val = (records[cadet] && records[cadet][metricKey]) ? records[cadet][metricKey] : '';
+      const val = (records[cadet] && records[cadet].current && records[cadet].current[metricKey]) ? records[cadet].current[metricKey] : '';
       const safeVal = String(val).replace(/"/g, '&quot;');
       const safeEscaped = cadet.replace(/'/g, "\\'");
       return `
@@ -430,8 +433,9 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const currentDate = new Date().toLocaleDateString();
 
     if (!records[cadet]) records[cadet] = {};
-    records[cadet][metricKey] = value;
-    records[cadet].date = currentDate;
+    if (!records[cadet].current) records[cadet].current = {};
+    records[cadet].current[metricKey] = value;
+    records[cadet].current.date = currentDate;
 
     saveData();
     renderHistory();
@@ -439,10 +443,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   function resetMetric(metricKey) {
     const eventNames = { curlups: 'Curl Ups', pushups: 'Pushups', sitreach: 'Sit & Reach' };
-    if (confirm(`Are you sure you want to reset all ${eventNames[metricKey]} scores?`)) {
+    if (confirm(`Are you sure you want to reset current ${eventNames[metricKey]} scores?`)) {
       for (let cadet in records) {
-        if (records[cadet]) {
-          delete records[cadet][metricKey];
+        if (records[cadet] && records[cadet].current) {
+          delete records[cadet].current[metricKey];
         }
       }
       saveData();
@@ -451,9 +455,25 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
   }
 
+  // Rolls current records into previous records and clears current for a new test day
+  function archiveCurrentTest() {
+    if (confirm("Archive current test results into 'Previous Test' and clear current fields for a new test?")) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          records[cadet].previous = { ...records[cadet].current };
+          records[cadet].current = {};
+        }
+      }
+      saveData();
+      renderHistory();
+      initActiveRunners();
+      alert("Test day rolled over successfully!");
+    }
+  }
+
   function renderHistory() {
     const historyListEl = document.getElementById('history-list');
-    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].run || records[c].curlups || records[c].pushups || records[c].sitreach));
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].current || records[c].previous));
 
     if (activeCadetsWithRecords.length === 0) {
       historyListEl.innerHTML = '<p class="m" style="color:var(--mute);">No records recorded yet.</p>';
@@ -462,29 +482,26 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
       historyListEl.innerHTML = sortedHistory.map(cadet => {
         const data = records[cadet];
+        const cur = data.current || {};
+        const prev = data.previous || {};
         return `
           <div class="history-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <strong>${cadet}</strong>
-              <span style="color:var(--mute); font-size:0.8rem">${data.date || ''}</span>
-            </div>
+            <strong>${cadet}</strong>
+            
+            <div style="margin-top:6px; font-size:0.85rem; font-weight:bold; color:var(--acc);">Current Test (${cur.date || 'No Date'})</div>
             <div class="metric-boxes">
-              <div class="metric-box">
-                Run Time
-                <span>${data.run || '—'}</span>
-              </div>
-              <div class="metric-box">
-                Curl Ups
-                <span>${data.curlups || '—'}</span>
-              </div>
-              <div class="metric-box">
-                Pushups
-                <span>${data.pushups || '—'}</span>
-              </div>
-              <div class="metric-box">
-                Sit & Reach
-                <span>${data.sitreach || '—'}</span>
-              </div>
+              <div class="metric-box">Run <span>${cur.run || '—'}</span></div>
+              <div class="metric-box">Curl <span>${cur.curlups || '—'}</span></div>
+              <div class="metric-box">Push <span>${cur.pushups || '—'}</span></div>
+              <div class="metric-box">Sit&R <span>${cur.sitreach || '—'}</span></div>
+            </div>
+
+            <div style="margin-top:8px; font-size:0.85rem; font-weight:bold; color:var(--mute);">Previous Test (${prev.date || 'No Date'})</div>
+            <div class="metric-boxes">
+              <div class="metric-box">Run <span>${prev.run || '—'}</span></div>
+              <div class="metric-box">Curl <span>${prev.curlups || '—'}</span></div>
+              <div class="metric-box">Push <span>${prev.pushups || '—'}</span></div>
+              <div class="metric-box">Sit&R <span>${prev.sitreach || '—'}</span></div>
             </div>
           </div>
         `;
@@ -493,7 +510,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   }
 
   function exportToCSV() {
-    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].run || records[c].curlups || records[c].pushups || records[c].sitreach));
+    const activeCadetsWithRecords = cadets.filter(c => records[c] && (records[c].current || records[c].previous));
     if (activeCadetsWithRecords.length === 0) {
       alert("No history to export.");
       return;
@@ -501,11 +518,13 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     
     let exportList = [...activeCadetsWithRecords].sort((a, b) => a.localeCompare(b));
 
-    let csvContent = "data:text/csv;charset=utf-8,Cadet,Run Time,Curl Ups,Pushups,Sit and Reach,Date\r\n";
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Current Date,Current Run,Current Curl Ups,Current Pushups,Current Sit & Reach,Previous Date,Previous Run,Previous Curl Ups,Previous Pushups,Previous Sit & Reach\r\n";
     exportList.forEach(cadet => {
-      let d = records[cadet];
+      let d = records[cadet] || {};
+      let cur = d.current || {};
+      let prev = d.previous || {};
       let safeCadet = `"${cadet.replace(/"/g, '""')}"`;
-      csvContent += `${safeCadet},${d.run || ''},${d.curlups || ''},${d.pushups || ''},${d.sitreach || ''},${d.date || ''}\r\n`;
+      csvContent += `${safeCadet},${cur.date || ''},${cur.run || ''},${cur.curlups || ''},${cur.pushups || ''},${cur.sitreach || ''},${prev.date || ''},${prev.run || ''},${prev.curlups || ''},${prev.pushups || ''},${prev.sitreach || ''}\r\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -518,7 +537,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   }
 
   function clearHistory() {
-    if (confirm("Are you sure you want to clear all history?")) {
+    if (confirm("Are you sure you want to clear all current and previous history?")) {
       records = {};
       saveData();
       renderHistory();
