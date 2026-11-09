@@ -63,55 +63,19 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 <div id="app-content" style="display: none;">
   <h1>RCCS Cadet Fitness Tracker</h1>
 
-  <!-- Permanent Top Section: Roster & History -->
-  <div class="card">
-    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-      <button onclick="toggleTopSection('roster')" id="btn-toggle-roster" class="p" style="flex:1; font-size:0.85rem;">Manage Roster</button>
-      <button onclick="toggleTopSection('history')" id="btn-toggle-history" style="flex:1; font-size:0.85rem;">View History</button>
-    </div>
-
-    <!-- Roster Panel -->
-    <div id="panel-roster" style="display: block;">
-      <h2>Select Participants for Heat</h2>
-      <div style="margin-bottom: 12px; display:flex; gap:6px;">
-        <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
-        <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
-      </div>
-
-      <div class="g" style="margin-bottom: 12px;">
-        <input type="text" id="cadet-name-input" placeholder="Last, First (CAP ID)">
-        <button onclick="addCadet()" class="p">Add</button>
-      </div>
-
-      <h3>Roster (<span id="cadet-count">0</span>)</h3>
-      <ul id="cadet-select-list" style="max-height: 200px; overflow-y: auto;"></ul>
-    </div>
-
-    <!-- History Panel -->
-    <div id="panel-history" style="display: none;">
-      <h2>Fitness History (Last 2 Tests)</h2>
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button onclick="archiveCurrentTest()" class="p" style="font-size:0.85rem; flex:1; background:var(--ok); border-color:var(--ok);">Archive Test Day</button>
-        <button onclick="exportToCSV()" class="p" style="font-size:0.85rem;">CSV</button>
-        <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear</button>
-      </div>
-      <div id="history-list" style="max-height: 250px; overflow-y: auto;">
-        <p class="m" style="color:var(--mute);">No records recorded yet.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Task/Event Navigation -->
+  <!-- Navigation Bar -->
   <nav>
-    <button data-v="pacer" class="on">Pacer</button>
+    <button data-v="roster" class="on">Roster</button>
+    <button data-v="hist">History</button>
+    <button data-v="pacer">Pacer</button>
     <button data-v="run">Mile Run</button>
     <button data-v="curlups">Curl Ups</button>
     <button data-v="pushups">Pushups</button>
     <button data-v="sitreach">Sit & Reach</button>
   </nav>
 
-  <!-- Pacer View -->
-  <div id="view-pacer" class="view-section active card">
+  <!-- Pacer View (Raised right below navigation) -->
+  <div id="view-pacer" class="view-section card">
     <h2>Pacer Tracking</h2>
     <p class="msg">Type scores for participants. Changes save automatically.</p>
     <div style="margin-bottom: 12px;">
@@ -137,7 +101,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
     <h3>Participants</h3>
     <div id="active-runners-container">
-      <p class="m">No runners selected. Go to the Roster above to choose cadets.</p>
+      <p class="m">No runners selected. Go to the "Roster" tab to choose cadets for this heat.</p>
     </div>
     <p id="run-msg" class="msg" style="margin-top:12px;"></p>
   </div>
@@ -177,6 +141,37 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       <p class="m">No participants selected.</p>
     </div>
   </div>
+
+  <!-- Roster View -->
+  <div id="view-roster" class="view-section active card">
+    <h2>Select Participants for Heat</h2>
+    <div style="margin-bottom: 12px; display:flex; gap:6px;">
+      <button onclick="selectAll(true)" style="font-size:0.85rem; padding:6px;">Select All</button>
+      <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
+    </div>
+
+    <div class="g" style="margin-bottom: 12px;">
+      <input type="text" id="cadet-name-input" placeholder="Last, First (CAP ID)">
+      <button onclick="addCadet()" class="p">Add</button>
+    </div>
+
+    <h3>Roster (<span id="cadet-count">0</span>)</h3>
+    <ul id="cadet-select-list"></ul>
+  </div>
+
+  <!-- History View -->
+  <div id="view-hist" class="view-section card">
+    <h2>Fitness History (Last 2 Tests)</h2>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button onclick="archiveCurrentTest()" class="p" style="font-size:0.85rem; flex:1; background:var(--ok); border-color:var(--ok);">Archive/Roll Over Test Day</button>
+      <button onclick="exportToCSV()" class="p" style="font-size:0.85rem;">Download CSV</button>
+      <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear All</button>
+    </div>
+    <p class="msg">Clicking archive rolls current scores to previous test, clears current fields, and deselects all roster participants.</p>
+    <div id="history-list">
+      <p class="m" style="color:var(--mute);">No records recorded yet.</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -199,25 +194,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
   });
 
-  function toggleTopSection(section) {
-    const rosterPanel = document.getElementById('panel-roster');
-    const historyPanel = document.getElementById('panel-history');
-    const rosterBtn = document.getElementById('btn-toggle-roster');
-    const historyBtn = document.getElementById('btn-toggle-history');
-
-    if (section === 'roster') {
-      rosterPanel.style.display = 'block';
-      historyPanel.style.display = 'none';
-      rosterBtn.classList.add('p');
-      historyBtn.classList.remove('p');
-    } else {
-      rosterPanel.style.display = 'none';
-      historyPanel.style.display = 'block';
-      historyBtn.classList.add('p');
-      rosterBtn.classList.remove('p');
-    }
-  }
-
   const buttons = document.querySelectorAll('nav button');
   const sections = document.querySelectorAll('.view-section');
 
@@ -229,7 +205,17 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       sections.forEach(section => {
         section.classList.toggle('active', section.id === 'view-' + targetView);
       });
-      initMetricInput(targetView);
+      if(targetView === 'pacer') {
+        initMetricInput('pacer');
+      } else if(targetView === 'run') {
+        initActiveRunners();
+      } else if(targetView === 'curlups') {
+        initMetricInput('curlups');
+      } else if(targetView === 'pushups') {
+        initMetricInput('pushups');
+      } else if(targetView === 'sitreach') {
+        initMetricInput('sitreach');
+      }
     });
   });
 
@@ -351,7 +337,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const container = document.getElementById('active-runners-container');
     if (!container) return;
     if (selectedCadets.length === 0) {
-      container.innerHTML = '<p class="m">No runners selected. Go to the Roster above to choose cadets.</p>';
+      container.innerHTML = '<p class="m">No runners selected. Go to the "Roster" tab to choose cadets.</p>';
       return;
     }
 
@@ -382,7 +368,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 
   function startHeat() {
     if (selectedCadets.length === 0) {
-      alert("Please select at least one cadet from the Roster section first.");
+      alert("Please select at least one cadet in the Roster tab first.");
       return;
     }
     if (heatStartTime) return; 
@@ -460,7 +446,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     const container = document.getElementById(`${metricKey}-container`);
     if (!container) return;
     if (selectedCadets.length === 0) {
-      container.innerHTML = '<p class="m">No participants selected. Go to the Roster above to choose cadets.</p>';
+      container.innerHTML = '<p class="m">No participants selected. Go to the "Roster" tab to choose cadets.</p>';
       return;
     }
 
@@ -520,7 +506,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       saveData();
       renderRoster();
       renderHistory();
-      initMetricInput('pacer');
+      initActiveRunners();
       
       alert("Test day archived and roster deselected successfully!");
     }
@@ -599,14 +585,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       records = {};
       saveData();
       renderHistory();
-      initMetricInput('pacer');
+      initActiveRunners();
     }
   }
 
   function initializeApp() {
     renderRoster();
     renderHistory();
-    initMetricInput('pacer');
+    initActiveRunners();
   }
 </script>
 </body>
