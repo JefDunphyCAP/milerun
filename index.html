@@ -61,7 +61,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <p id="run-msg" class="msg" style="margin-top:12px;"></p>
 </div>
 
-<!-- Roster & Selection View -->
+<!-- Roster View -->
 <div id="view-roster" class="view-section card">
   <h2>Select Participants for Heat</h2>
   <div style="margin-bottom: 12px; display:flex; gap:6px;">
@@ -211,7 +211,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       return;
     }
 
-    container.innerHTML = selectedCadets.map(cadet => {
+    // Sort active runners: Unfinished runners first, finished runners moved to the bottom
+    let sortedRunners = [...selectedCadets].sort((a, b) => {
+      let aDone = runnerTimes[a] ? 1 : 0;
+      let bDone = runnerTimes[b] ? 1 : 0;
+      return aDone - bDone;
+    });
+
+    container.innerHTML = sortedRunners.map(cadet => {
       const finishedTime = runnerTimes[cadet];
       const displayTxt = finishedTime ? finishedTime : "00:00.0";
       const isDone = finishedTime ? "done-time" : "";
@@ -267,7 +274,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     history.unshift({ cadet, time: formatted, date: new Date().toLocaleDateString() });
     saveData();
     renderHistory();
-    initActiveRunners();
+    initActiveRunners(); // Re-renders and automatically bumps finished runner to the bottom
 
     const allFinished = selectedCadets.every(c => runnerTimes[c]);
     if (allFinished) {
