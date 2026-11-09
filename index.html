@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Put all your original head contents, styles, and links here -->
+    <!-- 1. Paste all your original <head> contents, styles, and scripts here -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mile Run Tracker</title>
+    
     <style>
         /* Login Overlay Styles */
         #login-overlay {
@@ -13,11 +14,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
+            background-color: rgba(0, 0, 0, 0.9);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 99999;
+            z-index: 999999;
         }
         .login-box {
             background: white;
@@ -58,20 +59,20 @@
             margin-top: 10px;
             display: none;
         }
-        
-        /* Keep your original styles here as well, and wrap everything else */
-        #app-container {
-            display: none; /* Hidden until correct password is entered */
+
+        /* This keeps your original site hidden initially */
+        #protected-content {
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <!-- Login Screen Overlay -->
+    <!-- Password Login Gate Overlay -->
     <div id="login-overlay">
         <div class="login-box">
             <h2>Site Access</h2>
-            <p>Please enter the password to view the tracker.</p>
+            <p>Please enter the password to continue.</p>
             <input type="password" id="password-input" placeholder="Password">
             <br>
             <button onclick="checkPassword()">Enter</button>
@@ -79,13 +80,15 @@
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER: Place your exact original HTML/body contents right here -->
-    <div id="app-container">
+    <!-- 2. WRAPPER FOR YOUR ORIGINAL SITE -->
+    <div id="protected-content">
         
-        <!-- PASTE ALL YOUR ORIGINAL TRACKER HTML CODE HERE -->
+        <!-- PASTE ALL YOUR ORIGINAL BODY HTML CONTENT HERE -->
+        <!-- (Everything you had inside your <body> before adding the password) -->
 
     </div>
 
+    <!-- Password Verification Script -->
     <script>
         function checkPassword() {
             const inputVal = document.getElementById('password-input').value;
@@ -93,8 +96,9 @@
             const errorMsg = document.getElementById('error-msg');
 
             if (inputVal === correctPassword) {
+                // Hide the login screen and show your original site
                 document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('protected-content').style.display = 'block';
             } else {
                 errorMsg.style.display = 'block';
                 document.getElementById('password-input').value = '';
