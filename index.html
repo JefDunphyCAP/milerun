@@ -163,7 +163,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 <script>
   function checkPassword() {
     const inputVal = document.getElementById('password-input').value;
-    
     if (inputVal === "RCCSmile") {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('app-content').style.display = 'block';
@@ -226,28 +225,14 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     "Xia, Anlang, (792179)"
   ];
 
-  function encodeBase64(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-  }
-
-  function decodeBase64(str) {
-    return decodeURIComponent(escape(atob(str)));
-  }
-
-  let storedCadetsRaw = JSON.parse(localStorage.getItem('rccs_cadets'));
-  let initialCadets = storedCadetsRaw ? storedCadetsRaw.map(c => {
-    try { return decodeBase64(c); } catch(e) { return c; }
-  }) : defaultCadets;
-
-  let cadets = initialCadets;
+  let cadets = JSON.parse(localStorage.getItem('rccs_cadets')) || defaultCadets;
   let selectedCadets = JSON.parse(localStorage.getItem('rccs_selected')) || [];
   let records = JSON.parse(localStorage.getItem('rccs_records')) || {}; 
 
   cadets.sort((a, b) => a.localeCompare(b));
 
   function saveData() {
-    const encodedCadetsForStorage = cadets.map(c => encodeBase64(c));
-    localStorage.setItem('rccs_cadets', JSON.stringify(encodedCadetsForStorage));
+    localStorage.setItem('rccs_cadets', JSON.stringify(cadets));
     localStorage.setItem('rccs_selected', JSON.stringify(selectedCadets));
     localStorage.setItem('rccs_records', JSON.stringify(records));
   }
@@ -464,4 +449,15 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     renderHistory();
   }
 
-  function resetMetric(met
+  function resetMetric(metricKey) {
+    const eventNames = { curlups: 'Curl Ups', pushups: 'Pushups', sitreach: 'Sit & Reach' };
+    if (confirm(`Are you sure you want to reset current ${eventNames[metricKey]} scores?`)) {
+      for (let cadet in records) {
+        if (records[cadet] && records[cadet].current) {
+          delete records[cadet].current[metricKey];
+        }
+      }
+      saveData();
+      renderHistory();
+      initMetricInput(metricKey);
+    
