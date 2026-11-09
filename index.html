@@ -45,7 +45,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 <div id="view-run" class="view-section active card">
   <h2>Mass Heat Timer</h2>
   
-  <!-- Large Master Timer Display -->
   <div id="master-clock" class="clock">00:00.0</div>
 
   <div class="g" style="margin-bottom:16px;">
@@ -82,7 +81,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
 <!-- History View -->
 <div id="view-hist" class="view-section card">
   <h2>Run History</h2>
-  <button onclick="clearHistory()" style="margin-bottom:12px; font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear History</button>
+  <div style="display:flex; gap:8px; margin-bottom:12px;">
+    <button onclick="exportToCSV()" class="p" style="font-size:0.85rem; flex:1;">Download CSV for Sheets</button>
+    <button onclick="clearHistory()" style="font-size:0.85rem; background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;">Clear History</button>
+  </div>
   <ul id="history-list">
     <li class="m" style="color:var(--mute);">No runs recorded yet.</li>
   </ul>
@@ -242,10 +244,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     heatInterval = setInterval(() => {
       const elapsed = Date.now() - heatStartTime;
 
-      // Update Large Master Clock
-      document.getElementById('master-clock').textContent = formatTime(elapsed);
+      if (heatStartTime) {
+        document.getElementById('master-clock').textContent = formatTime(elapsed);
+      }
 
-      // Update Individual Running Clocks
       selectedCadets.forEach(cadet => {
         if (!runnerTimes[cadet]) {
           const timeEl = document.getElementById(`time-${CSS.escape(cadet)}`);
@@ -266,6 +268,13 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     saveData();
     renderHistory();
     initActiveRunners();
+
+    const allFinished = selectedCadets.every(c => runnerTimes[c]);
+    if (allFinished) {
+      clearInterval(heatInterval);
+      heatStartTime = null; 
+      document.getElementById('start-heat-btn').style.background = '';
+    }
   }
 
   function resetHeat() {
@@ -275,6 +284,28 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     document.getElementById('master-clock').textContent = "00:00.0";
     document.getElementById('start-heat-btn').style.background = '';
     initActiveRunners();
+  }
+
+  function exportToCSV() {
+    if (history.length === 0) {
+      alert("No run history to export.");
+      return;
+    }
+    
+    let csvContent = "data:text/csv;charset=utf-8,Cadet,Time,Date\r\n";
+    history.forEach(h => {
+      // Escape commas in names if any
+      let safeCadet = `"${h.cadet.replace(/"/g, '""')}"`;
+      csvContent += `${safeCadet},${h.time},${h.date}\r\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "rccs_mile_run_history.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   function renderHistory() {
