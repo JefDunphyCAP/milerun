@@ -404,6 +404,15 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     heatStartTime = null;
     document.getElementById('master-clock').textContent = "00:00.0";
     document.getElementById('start-heat-btn').style.background = '';
+    
+    // Clear run scores from current test records so they can be re-timed
+    selectedCadets.forEach(cadet => {
+      if (records[cadet] && records[cadet].current) {
+        delete records[cadet].current.run;
+      }
+    });
+    saveData();
+    renderHistory();
     initActiveRunners();
   }
 
@@ -455,7 +464,6 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
     }
   }
 
-  // Rolls current records into previous records, clears current fields, and deselects all roster participants
   function archiveCurrentTest() {
     if (confirm("Archive current test results into 'Previous Test', reset active scores, and deselect all roster participants?")) {
       for (let cadet in records) {
@@ -465,14 +473,11 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
         }
       }
       
-      // Deselect all cadets and update UI immediately
       selectedCadets = [];
-      
-      // Reset timer if running
       resetHeat();
 
       saveData();
-      renderRoster();     // <--- Refreshes checkbox states on the Roster tab
+      renderRoster();
       renderHistory();
       initActiveRunners();
       
