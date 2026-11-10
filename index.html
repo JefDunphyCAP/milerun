@@ -189,9 +189,10 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
       <button onclick="selectAll(false)" style="font-size:0.85rem; padding:6px;">Deselect All</button>
     </div>
 
-    <div class="g" style="margin-bottom: 12px;">
-      <input type="text" id="cadet-name-input" placeholder="Last, First (CAP ID)">
-      <button onclick="addCadet()" class="p">Add</button>
+    <!-- ADJUSTED ROSTER INPUT SIZES HERE -->
+    <div style="display:flex; gap:8px; margin-bottom: 12px; align-items:center;">
+      <input type="text" id="cadet-name-input" placeholder="Last, First (CAP ID)" style="flex: 3; margin-bottom: 0;">
+      <button onclick="addCadet()" class="p" style="flex: 1;">Add</button>
     </div>
 
     <h3>Roster (<span id="cadet-count">0</span>)</h3>
