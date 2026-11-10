@@ -83,7 +83,7 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <div id="view-pacer" class="view-section card">
     <h2>Pacer Tracking</h2>
     
-    <!-- PACER AUDIO PLAYER MOVED TO TOP -->
+    <!-- PACER AUDIO PLAYER -->
     <div style="margin-bottom: 12px; background: var(--bg); padding: 8px; border-radius: 8px; border: 1px solid var(--line);">
       <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px;">Pacer Audio Test</label>
       <audio controls style="width:100%;">
@@ -128,6 +128,16 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <!-- Curl Ups View -->
   <div id="view-curlups" class="view-section card">
     <h2>Curl Ups Tracking</h2>
+    
+    <!-- CURL UPS AUDIO PLAYER -->
+    <div style="margin-bottom: 12px; background: var(--bg); padding: 8px; border-radius: 8px; border: 1px solid var(--line);">
+      <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px;">Curl Ups Audio Test</label>
+      <audio controls style="width:100%;">
+        <source src="pacer-audio.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
     <p class="msg">Type scores for participants. Changes save automatically.</p>
     <div style="margin-bottom: 12px;">
       <button onclick="resetMetric('curlups')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Curl Ups Scores</button>
@@ -140,6 +150,16 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <!-- Pushups View -->
   <div id="view-pushups" class="view-section card">
     <h2>Pushups Tracking</h2>
+    
+    <!-- PUSHUPS AUDIO PLAYER -->
+    <div style="margin-bottom: 12px; background: var(--bg); padding: 8px; border-radius: 8px; border: 1px solid var(--line);">
+      <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px;">Pushups Audio Test</label>
+      <audio controls style="width:100%;">
+        <source src="pacer-audio.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
     <p class="msg">Type scores for participants. Changes save automatically.</p>
     <div style="margin-bottom: 12px;">
       <button onclick="resetMetric('pushups')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Pushups Scores</button>
