@@ -82,9 +82,8 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
   <!-- Pacer View -->
   <div id="view-pacer" class="view-section card">
     <h2>Pacer Tracking</h2>
-    <p class="msg">Type scores for participants. Changes save automatically.</p>
     
-    <!-- PACER AUDIO PLAYER -->
+    <!-- PACER AUDIO PLAYER MOVED TO TOP -->
     <div style="margin-bottom: 12px; background: var(--bg); padding: 8px; border-radius: 8px; border: 1px solid var(--line);">
       <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px;">Pacer Audio Test</label>
       <audio controls style="width:100%;">
@@ -92,6 +91,8 @@ li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justif
         Your browser does not support the audio element.
       </audio>
     </div>
+
+    <p class="msg">Type scores for participants. Changes save automatically.</p>
 
     <div style="margin-bottom: 12px;">
       <button onclick="resetMetric('pacer')" style="background:#dc2626; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:0.85rem; cursor:pointer;">Reset Pacer Scores</button>
